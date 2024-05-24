@@ -1,1 +1,3 @@
 # Third-Party Libraries required for Primitives Package
+cloudcix
+jinja2
