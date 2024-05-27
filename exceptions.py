@@ -16,35 +16,43 @@ class InvalidDNS(BaseException):
 
 
 class InvalidFirewallRuleAction(BaseException):
-    pass
+    def __str__(self):
+        return "Invalid firewall rule action."
 
 
 class InvalidFirewallRuleDestination(BaseException):
-    pass
+    def __str__(self):
+        return "Invalid firewall rule destination."
 
 
 class InvalidFirewallRuleIPAddress(BaseException):
-    pass
+    def __str__(self):
+        return "Invalid firewall rule IP address."
 
 
 class InvalidFirewallRulePort(BaseException):
-    pass
+    def __str__(self):
+        return "Invalid firewall rule port."
 
 
 class InvalidFirewallRuleProtocol(BaseException):
-    pass
+    def __str__(self):
+        return "Invalid firewall rule protocol."
 
 
 class InvalidFirewallRuleSource(BaseException):
-    pass
+    def __str__(self):
+        return "Invalid firewall rule source."
 
 
 class InvalidFirewallRuleType(BaseException):
-    pass
+    def __str__(self):
+        return "Invalid firewall rule type."
 
 
 class InvalidFirewallRuleVersion(BaseException):
-    pass
+    def __str__(self):
+        return "Invalid firewall rule version."
 
 
 class InvalidPodNetMgmt(BaseException):
