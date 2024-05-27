@@ -30,34 +30,22 @@ class FirewallPodNet:
         self.errors = []
 
     def __call__(self):
-        error = self._validate_action()
-        if error is not None:
-            self.success = False
-            self.errors.append(str(error))
-        error = self._validate_version()
-        if error is not None:
-            self.success = False
-            self.errors.append(str(error))
-        error = self._validate_destination()
-        if error is not None:
-            self.success = False
-            self.errors.append(str(error))
-        error = self._validate_source()
-        if error is not None:
-            self.success = False
-            self.errors.append(str(error))
-        error = self._validate_protocol()
-        if error is not None:
-            self.success = False
-            self.errors.append(str(error))
-        error = self._validate_port()
-        if error is not None:
-            self.success = False
-            self.errors.append(str(error))
-        error = self._validate_type()
-        if error is not None:
-            self.success = False
-            self.errors.append(str(error))
+        validators = [
+            self._validate_action,
+            self._validate_version,
+            self._validate_destination,
+            self._validate_source,
+            self._validate_protocol,
+            self._validate_port,
+            self._validate_type,
+        ]
+
+        for validator in validators:
+            error = validator()
+            if error is not None:
+                self.success = False
+                self.errors.append(str(error))
+
         return self.success, self.errors
 
     @exception_handler
