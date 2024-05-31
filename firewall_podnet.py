@@ -23,10 +23,10 @@ def complete_rule(rule, iiface, oiface, log_setup):
     v = '' if rule['version'] == '4' else '6'
 
     # input interface line
-    iif = f'iifname "{iiface}"' if iiface is not None else ''
+    iif = f'iifname "{iiface}"' if iiface not in [None, 'any'] else ''
 
     # output interface line
-    oif = f'oifname "{oiface}"' if oiface is not None else ''
+    oif = f'oifname "{oiface}"' if oiface not in [None, 'any'] else ''
 
     # sort the `destination` rule format
     if rule['destination'] is None or 'any' in rule['destination']:
