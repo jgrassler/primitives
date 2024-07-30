@@ -33,7 +33,7 @@ def build(
 ) -> Tuple[bool, str]:
     """
     description:
-        1. Backups if /etc/netplan/<order>-<identifier>.yaml exits
+        1. Backups if /etc/netplan/<order>-<identifier>.yaml exists
         2. Creates /etc/netplan/<order>-<identifier>.yaml
         3. Verifies the changes(netplan generate), if failed then reverts the changes and exits
         4. Applies the changes(netplan apply)
