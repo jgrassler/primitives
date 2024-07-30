@@ -1,15 +1,20 @@
-
-    # {{ name }} Interface
-    {{ identifier }}:
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+{# `system_name` is the name given by the system           #}
+    {{ system_name }}:
       dhcp4: false
       dhcp6: false
       accept-ra: no
+{# `ips` addresses section                                 #}
 {%- if ips != None and ips|length > 0 %}
 \n      addresses:
 {%- for ip in ips %}
 \n        - {{ ip }}
 {%- endfor %}
 {%- endif %}
+{# `routes` section                                        #}
 {%- if routes != None and routes|length > 0 %}
 \n      routes:
 {%- for route in routes %}
@@ -17,11 +22,41 @@
           via: {{ route['via'] }}
 {%- endfor %}
 {%- endif %}
+\n
+{# Optional setup macaddress to `mac`                      #}
 {%- if mac != None %}
 \n      match:
         macaddress: {{ mac }}
-{%- if name != None %}
-\n      set-name: {{ name }}
 {%- endif %}
+{# Optional setup set-name to `identifier`                 #}
+{%- if identifier != None %}
+\n      set-name: {{ identifier }}
+{%- endif %}
+
+{# `vlan` tagged Interface section                         #}
+{%- if vlan != None %}
+\n
+  vlans:
+    {{ identifier }}.{{ vlan }}:
+      dhcp4: false
+      dhcp6: false
+      accept-ra: no
+      id: {{ vlan }}
+      link: {{ identifier }}
+{%- endif %}
+{# `vlan_ips` addresses section                            #}
+{%- if vlan_ips != None and vlan_ips|length > 0 %}
+\n      addresses:
+{%- for vlan_ip in vlan_ips %}
+\n        - {{ vlan_ip }}
+{%- endfor %}
+{%- endif %}
+{# `vlan_routes` section                                   #}
+{%- if vlan_routes != None and vlan_routes|length > 0 %}
+\n      routes:
+{%- for vlan_route in vlan_routes %}
+\n        - to: {{ vlan_route['to'] }}
+          via: {{ vlan_route['via'] }}
+{%- endfor %}
 {%- endif %}
 \n

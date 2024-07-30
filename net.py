@@ -21,15 +21,23 @@ LOGGER = 'primitives.net'
 def build(
         host: str,
         identifier: str,
-        ips: list,
+        order: int,
+        system_name: str,
         config_filepath=None,
+        ips=None,
         mac=None,
-        name=None,
         routes=None,
+        vlan=None,
+        vlan_ips=None,
+        vlan_routes=None,
 ) -> Tuple[bool, str]:
     """
     description:
-        appends the netplan config for the given interface in /etc/netplan/00-installer-config.yaml
+        1. Backups if /etc/netplan/<order>-<identifier>.yaml exits
+        2. Creates /etc/netplan/<order>-<identifier>.yaml
+        3. Verifies the changes(netplan generate), if failed then reverts the changes and exits
+        4. Applies the changes(netplan apply)
+        5. Removes the Backup file
 
     parameters:
         host:
@@ -37,26 +45,29 @@ def build(
             type: string
             required: True
         identifier:
-            description: The interface's logical name on the machine.
+            description: The interface's custom name on the machine.
             type: string
             required: True
-        ips:
-            description: List of IPaddresses defined on this interface, in string format
-            type: list
+        order:
+            description: To specify the order in which this interface added to networking services
+            type: int
+            required: True
+        system_name:
+            description: The interface's logical name on the machine.
+            type: string
             required: True
         config_filepath:
             description: |
                 Location of the json file with hardware settings. If one is not provided, the default path will be used
-            required: False
             type: string
+        ips:
+            description: List of IPaddresses defined on ethernet interface, in string format
+            type: list
         mac:
             description: macaddress of the interface
             type: string
-        name:
-            description: The interface's custom name on the machine.
-            type: string
         routes:
-            description: List of route objects defined on this interface
+            description: List of route objects defined on ethernet interface
             type: list
             properties:
                 to:
@@ -64,6 +75,22 @@ def build(
                     type: string
                 via:
                     description: IP addresses from which the traffic is directed
+        vlan:
+            description: The number used to tag the identifier interface.
+            type: int
+        vlan_ips:
+            description: List of IPaddresses defined on vlan interface, in string format
+            type: list
+        vlan_routes:
+            description: List of route objects defined on vlan interface
+            type: list
+            properties:
+                to:
+                    description: IP addresses to which the traffic is destined
+                    type: string
+                via:
+                    description: IP addresses from which the traffic is directed
+
     return:
         description: |
             A tuple with a boolean flag stating whether the build was successful or not and
@@ -80,13 +107,13 @@ def build(
         config_filepath = '/etc/cloudcix/pod/configs/config.json'
 
     # netplan file
-    netplan_filepath = '/etc/netplan/00-installer-config.yaml'
+    netplan_filepath = f'/etc/netplan/{order}-{identifier}.yaml'
 
     # messages
     messages = {
-        '000': f'Successfully added interface #{identifier} to {netplan_filepath}',
+        '000': f'Successfully built interface #{identifier} in network',
         '300': f'Failed to backup {netplan_filepath} to {netplan_filepath}.bak',
-        '301': f'Failed to add interface #{identifier} to {netplan_filepath}',
+        '301': f'Failed to build interface #{identifier} to in network',
         '302': f'Failed to Generate netplan config.',
         '303': f'Failed to Apply netplan config.',
     }
@@ -96,9 +123,12 @@ def build(
         'ips': ips,
         'mac': mac,
         'messages': messages,
-        'name': name,
         'netplan_filepath': netplan_filepath,
         'routes': routes,
+        'system_name': system_name,
+        'vlan': vlan,
+        'vlan_ips': vlan_ips,
+        'vlan_routes': vlan_routes,
     }
 
     # ensure all the required keys are collected and no key has None value for template_data
