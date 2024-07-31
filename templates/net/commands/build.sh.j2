@@ -32,7 +32,7 @@ if ! sudo echo "{% include 'net/configs/netplan.yaml.j2' %}" > {{ netplan_filepa
     exit 1
 fi
 {# Verify changes for errors, if found then revert the changes #}
-if ! sudo netplan generate; then
+if ! sudo netplan generate > /dev/null 2>&1; then
     echo "{{ messages['302'] }}"
     revert
     exit 1
