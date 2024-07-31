@@ -20,43 +20,52 @@ LOGGER = 'primitives.net'
 
 def build(
         host: str,
-        identifier: str,
-        ips: list,
+        filename: str,
+        standard_name: str,
+        system_name: str,
         config_filepath=None,
+        ips=None,
         mac=None,
-        name=None,
         routes=None,
+        vlans=None,
 ) -> Tuple[bool, str]:
     """
     description:
-        appends the netplan config for the given interface in /etc/netplan/00-installer-config.yaml
+        1. Backups if /etc/netplan/<filename>.yaml exists
+        2. Creates /etc/netplan/<filename>.yaml
+        3. Verifies the changes(netplan generate), if failed then reverts the changes and exits
+        4. Applies the changes(netplan apply)
+        5. Removes the Backup file
 
     parameters:
         host:
             description: IP or dns name of the host where the interface is created on.
             type: string
             required: True
-        identifier:
-            description: The interface's logical name on the machine.
+        filename:
+            description: Name of the file to be created in /etc/netplan/ dir
+            type: str
+            required: True
+        standard_name:
+            description: The interface's custom/standard name on the machine.
             type: string
             required: True
-        ips:
-            description: List of IPaddresses defined on this interface, in string format
-            type: list
+        system_name:
+            description: The interface's logical name on the machine.
+            type: string
             required: True
         config_filepath:
             description: |
                 Location of the json file with hardware settings. If one is not provided, the default path will be used
-            required: False
             type: string
+        ips:
+            description: List of IPaddresses defined on ethernet interface, in string format
+            type: list
         mac:
             description: macaddress of the interface
             type: string
-        name:
-            description: The interface's custom name on the machine.
-            type: string
         routes:
-            description: List of route objects defined on this interface
+            description: List of route objects defined on ethernet interface
             type: list
             properties:
                 to:
@@ -64,6 +73,26 @@ def build(
                     type: string
                 via:
                     description: IP addresses from which the traffic is directed
+        vlans:
+            description: List of vlan interface objects
+            type: list
+            properties:
+                vlan:
+                    description: The number used to tag the standard_name interface.
+                    type: int
+                ips:
+                    description: List of IPaddresses defined on vlan interface, in string format
+                    type: list
+                routes:
+                    description: List of route objects defined on vlan interface
+                    type: list
+                    properties:
+                        to:
+                            description: IP addresses to which the traffic is destined
+                            type: string
+                        via:
+                            description: IP addresses from which the traffic is directed
+
     return:
         description: |
             A tuple with a boolean flag stating whether the build was successful or not and
@@ -80,25 +109,26 @@ def build(
         config_filepath = '/etc/cloudcix/pod/configs/config.json'
 
     # netplan file
-    netplan_filepath = '/etc/netplan/00-installer-config.yaml'
+    netplan_filepath = f'/etc/netplan/{filename}.yaml'
 
     # messages
     messages = {
-        '000': f'Successfully added interface #{identifier} to {netplan_filepath}',
+        '000': f'Successfully built interface #{standard_name} in network',
         '300': f'Failed to backup {netplan_filepath} to {netplan_filepath}.bak',
-        '301': f'Failed to add interface #{identifier} to {netplan_filepath}',
+        '301': f'Failed to build interface #{standard_name} to in network',
         '302': f'Failed to Generate netplan config.',
         '303': f'Failed to Apply netplan config.',
     }
 
     template_data = {
-        'identifier': identifier,
         'ips': ips,
         'mac': mac,
         'messages': messages,
-        'name': name,
         'netplan_filepath': netplan_filepath,
         'routes': routes,
+        'standard_name': standard_name,
+        'system_name': system_name,
+        'vlans': vlans,
     }
 
     # ensure all the required keys are collected and no key has None value for template_data
@@ -106,14 +136,14 @@ def build(
     template_verified, template_error = check_template_data(template_data, template)
     if not template_verified:
         logger.debug(
-            f'Failed to generate build bash script for Netplan Interface #{identifier}.\n{template_error}',
+            f'Failed to generate build bash script for Netplan Interface #{standard_name}.\n{template_error}',
         )
         return False, template_error
 
     # Prepare public bridge build config
     bash_script = template.render(**template_data)
     logger.debug(
-        f'Generated build bash script for Netplan Interface #{identifier}\n{bash_script}',
+        f'Generated build bash script for Netplan Interface #{standard_name}\n{bash_script}',
     )
 
     success, output = False, ''
@@ -134,7 +164,7 @@ def build(
 
     if stdout:
         logger.debug(
-            f'Netplan interface #{identifier} on #{host} build commands generated stdout.'
+            f'Netplan interface #{standard_name} on #{host} build commands generated stdout.'
             f'\n{stdout}',
         )
         for code, message in messages.items():
@@ -145,7 +175,7 @@ def build(
 
     if stderr:
         logger.error(
-            f'Netplan interface #{identifier} on #{host} build commands generated stderr.'
+            f'Netplan interface #{standard_name} on #{host} build commands generated stderr.'
             f'\n{stderr}',
         )
         output += stderr
