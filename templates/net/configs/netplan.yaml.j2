@@ -33,7 +33,7 @@ network:
       dhcp6: false
       accept-ra: no
       id: {{ vlan['vlan'] }}
-      link: {{ standard_name }}
+      link: {{ system_name }}
 {% if vlan['ips'] is not none and vlan['ips']|length > 0 %}
       addresses:
 {% for vlan_ip in vlan['ips'] %}
