@@ -45,10 +45,7 @@ def build(
     # Define message
     messages = {
         1000: f'1000: Successfully created directory {path}',
-        1031: f'1031: Successfully created directory {path} on enabled PodNet but Failed to connect to the disabled PodNet '
-              f'from the config file {config_file}',
-        1032: f'1032: Successfully created directory {path} on enabled PodNet but Failed to create on the disabled PodNet',
-
+        2111: f'2011: Config file {path} loaded.',
         3000: f'3000: Failed to create directory {path}',
         3011: f'3011: Failed to load config file {config_file}, It does not exits.',
         3012: f'3012: Failed to get `ipv6_subnet` from config file {config_file}',
@@ -60,6 +57,9 @@ def build(
         3018: f'3018: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
         3021: f'3021: Failed to connect to the enabled PodNet from the config file {config_file}',
         3022: f'3022: Failed to create directory {path} on the enabled PodNet'
+        3031: f'3031: Successfully created directory {path} on enabled PodNet but Failed to connect to the disabled PodNet '
+              f'from the config file {config_file}',
+        3032: f'3032: Successfully created directory {path} on enabled PodNet but Failed to create on the disabled PodNet',
     }
 
     # Default config_file if it is None
@@ -132,9 +132,9 @@ def build(
             username='robot',
         )
     except CouldNotConnectException:
-        return True, messages[1031]
+        return False, messages[3031]
 
     if create_dir.exit_code != SUCCESS_CODE:
-        return True, messages[1032]
+        return False, messages[3032]
 
     return True, messages[1000]
