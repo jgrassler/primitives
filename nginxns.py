@@ -65,17 +65,25 @@ def build(
         3017: f'3017: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
         3018: f'3018: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
         3019: f'3019: Failed to render jinja2 template for {nginx_conf_path}',
-        3021: f'3021: Failed to connect to the enabled PodNet from the config file {config_file} for create_config_payload',
-        3022: f'3022: Failed to create config file {nginx_config_path} on the enabled PodNet. Payload exited with status ',
-        3023: f'3023: Failed to connect to the enabled PodNet from the config file {config_file} for start_nginx_payload',
-        3023: f'3024: Failed to start nginx on the enabled PodNet. Payload exited with status ',
-        3031: f'3031: Successfully created {nginx_config_path} and started nginx on enabled PodNet but failed to connect to the disabled PodNet '
+        3020: f'3020: Failed to connect to the enabled PodNet from the config file {config_file} for find_process_payload',
+        3021: f'3021: Failed to run find_process_payload on the enabled PodNet. Payload exited with status ',
+        3022: f'3022: Failed to connect to the enabled PodNet from the config file {config_file} for create_config_payload',
+        3023: f'3023: Failed to create config file {nginx_config_path} on the enabled PodNet. Payload exited with status ',
+        3024: f'3024: Failed to connect to the enabled PodNet from the config file {config_file} for reload_nginx_payload',
+        3025: f'3025: Failed to run reload_nginx_payload on the enabled PodNet. Payload exited with status ',
+        3026: f'3026: Failed to connect to the enabled PodNet from the config file {config_file} for start_nginx_payload',
+        3027: f'3027: Failed to start nginx on the enabled PodNet. Payload exited with status ',
+        3030: f'3030: Failed to connect to the enabled PodNet from the config file {config_file} for find_process_payload',
+        3031: f'3031: Failed to run find_process_payload on the disabled PodNet. Payload exited with status ',
+        3032: f'3032: Successfully created {nginx_config_path} and started nginx on enabled PodNet but failed to connect to the disabled PodNet '
               f'from the config file {config_file} for create_config_payload.',
-        3032: f'3032: Successfully created {nginx_config_path} and started nginx on enabled PodNet but failed to create {nginx_config_path} on the disabled PodNet. '
+        3033: f'3033: Successfully created {nginx_config_path} and started nginx on enabled PodNet but failed to create {nginx_config_path} on the disabled PodNet. '
                'Payload exited with status ',
-        3033: f'3033: Successfully created {nginx_config_path} on both PodNet nodes and started nginx on enabled PodNet but failed to connect to the disabled PodNet '
+        3034: f'3034: Failed to connect to the disabled PodNet from the config file {config_file} for reload_nginx_payload',
+        3035: f'3035: Failed to run reload_nginx_payload on the disabled PodNet. Payload exited with status ',
+        3036: f'3036: Successfully created {nginx_config_path} on both PodNet nodes and started nginx on enabled PodNet but failed to connect to the disabled PodNet '
               f'from the config file {config_file} for start_nginx_payload.',
-        3034: f'3034: Successfully created {nginx_config_path} on both PodNet nodes and started nginx on enabled PodNet but failed to start nginx on the disabled PodNet. '
+        3037: f'3037: Successfully created {nginx_config_path} on both PodNet nodes and started nginx on enabled PodNet but failed to start nginx on the disabled PodNet. '
                'Payload exited with status ',
     }
 
@@ -136,7 +144,7 @@ def build(
           pidfile=pidfile
       )
     except Exception as e:
-      return False, messages[3020]
+      return False, messages[3019]
 
     create_config_payload = "\n".join([
         f'tee {nginx_conf_path}s <<EOF',
@@ -144,11 +152,27 @@ def build(
         "EOF"
         ])
 
-    # FIXME: we need to check for existing process and SIGHUP that if it exists!
-    find_process_payload = f'ps auxw | grep nginx | grep {nginx_config_path}s'
-    start_nginx_payload = 'ip netns exec {namespace} nginx -c {nginx_conf_path}s'
+    # We need to check for existing process and SIGHUP its PID if one exist:
+    find_process_payload = "ps auxw | grep nginx | grep {nginx_config_path}s | awk '{print $2}'"
+    start_nginx_payload = f'ip netns exec {namespace} nginx -c {nginx_conf_path}s'
 
-    # call rcc comms_ssh on enabled PodNet
+    # call rcc comms_ssh on enabled PodNet to find existing process
+    try:
+        existing_process, stdout, stderr = comms_ssh(
+            host_ip=enabled,
+            payload=find_process_payload,
+            username='robot',
+        )
+    except CouldNotConnectException:
+        return False, messages[3020]
+
+    reload_nginx_payload_enabled = None
+    if (existing_process.exit_code == SUCCESS_CODE) and (stdout != ""):
+        reload_nginx_payload_enabled = f'kill -HUP {stdout}s'
+    else:
+       return False, messages[3021] + f'{existing_process.exit_code}s.'
+
+    # call rcc comms_ssh on enabled PodNet to create config
     try:
         create_config, stdout, stderr = comms_ssh(
             host_ip=enabled,
@@ -156,23 +180,54 @@ def build(
             username='robot',
         )
     except CouldNotConnectException:
-        return False, messages[3021]
+        return False, messages[3022]
 
     if create_config.exit_code != SUCCESS_CODE:
-        return False, messages[3022] + f'{create_config.exit_code}s.'
+        return False, messages[3023] + f'{create_config.exit_code}s.'
 
-    # call rcc comms_ssh on enabled PodNet
+    if reload_nginx_payload is not None:
+        # call rcc comms_ssh on enabled PodNet to SIGHUP existing process
+        try:
+            start_nginx, stdout, stderr = comms_ssh(
+                host_ip=enabled,
+                payload=reload_nginx_payload,
+                username='robot',
+            )
+        except CouldNotConnectException:
+            return False, messages[3024]
+
+        if start_nginx.exit_code != SUCCESS_CODE:
+            return False, messages[3025]  + f'{start_nginx.exit_code}s.'
+    else:
+        # call rcc comms_ssh on enabled PodNet
+        try:
+            start_nginx, stdout, stderr = comms_ssh(
+                host_ip=enabled,
+                payload=start_nginx_payload,
+                username='robot',
+            )
+        except CouldNotConnectException:
+            return False, messages[3026]
+
+        if start_nginx.exit_code != SUCCESS_CODE:
+            return False, messages[3027]  + f'{start_nginx.exit_code}s.'
+
+
+    # call rcc comms_ssh on disabled PodNet to find existing process
     try:
-        start_nginx, stdout, stderr = comms_ssh(
+        existing_process, stdout, stderr = comms_ssh(
             host_ip=enabled,
-            payload=start_nginx_payload,
+            payload=find_process_payload,
             username='robot',
         )
     except CouldNotConnectException:
-        return False, messages[3023]
+        return False, messages[3030]
 
-    if start_nginx.exit_code != SUCCESS_CODE:
-        return False, messages[3024]  + f'{start_nginx.exit_code}s.'
+    reload_nginx_payload_disabled = None
+    if (existing_process.exit_code == SUCCESS_CODE) and (stdout != ""):
+        reload_nginx_payload_enabled = f'kill -HUP {stdout}s'
+    else:
+       return False, messages[3031] + f'{existing_process.exit_code}s.'
 
     # call rcc comms_ssh on disabled PodNet
     try:
@@ -182,23 +237,37 @@ def build(
             username='robot',
         )
     except CouldNotConnectException:
-        return False, messages[3031]
+        return False, messages[3032]
 
     if create_config.exit_code != SUCCESS_CODE:
-        return False, messages[3032] + f'{create_config.exit_code}s.'
+        return False, messages[3033] + f'{create_config.exit_code}s.'
 
-    # call rcc comms_ssh on disabled PodNet
-    try:
-        start_nginx, stdout, stderr = comms_ssh(
-            host_ip=disabled,
-            payload=start_nginx_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3033]
+    if reload_nginx_payload_disabled is None:
+        # call rcc comms_ssh on disabled PodNet to SIGHUP existing process
+        try:
+            start_nginx, stdout, stderr = comms_ssh(
+                host_ip=disabled,
+                payload=reload_nginx_payload,
+                username='robot',
+            )
+        except CouldNotConnectException:
+            return False, messages[3034]
 
-    if start_nginx.exit_code != SUCCESS_CODE:
-        return False, messages[3034]  + f'{start_nginx.exit_code}s.'
+        if start_nginx.exit_code != SUCCESS_CODE:
+            return False, messages[3035]  + f'{start_nginx.exit_code}s.'
+    else:
+        # call rcc comms_ssh on disabled PodNet
+        try:
+            start_nginx, stdout, stderr = comms_ssh(
+                host_ip=disabled,
+                payload=start_nginx_payload,
+                username='robot',
+            )
+        except CouldNotConnectException:
+            return False, messages[3036]
+
+        if start_nginx.exit_code != SUCCESS_CODE:
+            return False, messages[3037]  + f'{start_nginx.exit_code}s.'
 
 
     return True, messages[1000]
@@ -232,7 +301,7 @@ def scrub(
 
     # Define message
     messages = {
-        1000: f'1100: Successfully stopped nginx process and deleted {nginx_config_path}.',
+        1100: f'1100: Successfully stopped nginx process and deleted {nginx_config_path}.',
         2111: f'2111: Config file {config_file} loaded.',
         3111: f'3111: Failed to load config file {config_file}, It does not exist.',
         3112: f'3112: Failed to get `ipv6_subnet` from config file {config_file}',
