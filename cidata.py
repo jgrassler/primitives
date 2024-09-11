@@ -34,13 +34,86 @@ def build(
         domain_path:
             description: path to the virtual machine's cloud-init directory.
                          This must be the full path, up to and including the
-                         version component.
+                         metaddata version component.
             type: string
             required: true
         metadata:
-            description: data structure that contains the machine's metadata
-            type: object
-            required: true
+          description: data structure that contains the machine's metadata
+          type: object
+          required: true
+          properties:
+            instance_id:
+              type: string
+              required: true
+              description: libvirt domain name for VM. Typically composed from
+                           numerical project ID and VM ID as follows:
+                           `<project_id>_<domain_id>`.
+            network:
+              type: object
+              required: true
+              description: the VM's network configuration
+              properties:
+                nameservers:
+                  description: the VM's DNS configuration
+                  type: object
+                  required: true
+                  properties:
+                    addresses:
+                      description: list of name server IP addresses
+                      type: array
+                      required: true
+                      items:
+                        description: a name server IP address such as `8.8.8.8`. At least one must be specified.
+                        type: string
+                        required: true
+                    search:
+                      type: array
+                      description: the machine's search domains for unqualified host names
+                      required: false
+                      items:
+                        description: a search domain to qualify unqualified
+                                     host names with, such as `cloudcix.com`
+                        required: false
+                        type: string
+                interfaces:
+                  type: object
+                  required: true
+                  description: The VM's network interface configuration
+                  properties:
+                    mac_address:
+                      description: The interface's MAC address (colon separated
+                                   bytes, lower case)
+                      type: string
+                      required: true
+                    addresses:
+                      description: The interface's IP addresses. At least one is required.
+                      type: array
+                      required: true
+                      items:
+                        description: an IP address with subnet mask specified
+                                     in CIDR notation as understood by ip(8), e.g.
+                                     `10.0.5.221/24`
+                        type: string
+                        required: true
+                    routes:
+                      description: routes to create for this particular interface. While optional, setting at
+                                   least a default route is highly recommended.
+                      type: object
+                      required: false
+                      properties:
+                        to:
+                          description: the route's destination. either a network
+                                       address with subnet mask specified in
+                                       CIDR notation, e.g. `10.0.6.0/8` or the
+                                       keyword `default` to indicate a default
+                                       route.
+                          type: string
+                          required: true
+                        via:
+                          description: IP address of the route's next hop, e.g.
+                                       `10.0.0.1`.
+                          type: string
+                          required: true
         config_file:
             description: path to the config.json file
             type: string
