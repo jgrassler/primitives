@@ -26,15 +26,12 @@ SUCCESS_CODE = 0
 template_path = os.path.join(os.path.dirname(__file__), 'templates', __name__.split(".").pop())
 
 def build(
-        domain_path: str,
-        domain: str,
-        interfaces: dict,
+        namespace: str,
         config_file=None,
-        userdata=""
 ) -> Tuple[bool, str]:
     """
     description:
-        Configures and launches an nginx instance for serving cloud-init userdata/metadata from a VRF network name space
+        Configures and starts an nginx instance for serving cloud-init userdata/metadata inside a VRF network name space on a PodNet node.
 
     parameters:
         namespace:
@@ -53,11 +50,12 @@ def build(
     """
 
     nginx_config_path = '/etc/netns/{namespace}/nginx.conf'
+    pidfile= '/run/nginx-{namespace}s.pid'
 
     # Define message
     messages = {
-        1000: f'1000: Successfully created and {nginx_config_path} and launched nginx process on both PodNet nodes.',
-        2111: f'2011: Config file {config_file} loaded.',
+        1000: f'1000: Successfully created {nginx_config_path} and started nginx process on both PodNet nodes.',
+        2011: f'2011: Config file {config_file} loaded.',
         3011: f'3011: Failed to load config file {config_file}, It does not exist.',
         3012: f'3012: Failed to get `ipv6_subnet` from config file {config_file}',
         3013: f'3013: Invalid value for `ipv6_subnet` from config file {config_file}',
@@ -69,15 +67,15 @@ def build(
         3019: f'3019: Failed to render jinja2 template for {nginx_conf_path}',
         3021: f'3021: Failed to connect to the enabled PodNet from the config file {config_file} for create_config_payload',
         3022: f'3022: Failed to create config file {nginx_config_path} on the enabled PodNet. Payload exited with status ',
-        3023: f'3023: Failed to connect to the enabled PodNet from the config file {config_file} for launch_nginx_payload',
-        3023: f'3024: Failed to launch nginx on the enabled PodNet. Payload exited with status ',
-        3031: f'3031: Successfully created {nginx_config_path} and launched nginx on enabled PodNet but failed to connect to the disabled PodNet '
+        3023: f'3023: Failed to connect to the enabled PodNet from the config file {config_file} for start_nginx_payload',
+        3023: f'3024: Failed to start nginx on the enabled PodNet. Payload exited with status ',
+        3031: f'3031: Successfully created {nginx_config_path} and started nginx on enabled PodNet but failed to connect to the disabled PodNet '
               f'from the config file {config_file} for create_config_payload.',
-        3032: f'3032: Successfully created {nginx_config_path} and launched nginx on enabled PodNet but failed to create {nginx_config_path} on the disabled PodNet. '
+        3032: f'3032: Successfully created {nginx_config_path} and started nginx on enabled PodNet but failed to create {nginx_config_path} on the disabled PodNet. '
                'Payload exited with status ',
-        3033: f'3033: Successfully created {nginx_config_path} on both PodNet nodes and launched nginx on enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file} for launch_nginx_payload.',
-        3034: f'3034: Successfully created {nginx_config_path} on both PodNet nodes and launched nginx on enabled PodNet but failed to launch nginx on the disabled PodNet. '
+        3033: f'3033: Successfully created {nginx_config_path} on both PodNet nodes and started nginx on enabled PodNet but failed to connect to the disabled PodNet '
+              f'from the config file {config_file} for start_nginx_payload.',
+        3034: f'3034: Successfully created {nginx_config_path} on both PodNet nodes and started nginx on enabled PodNet but failed to start nginx on the disabled PodNet. '
                'Payload exited with status ',
     }
 
@@ -134,91 +132,89 @@ def build(
       template = jenv.get_template("nginx.conf.j2")
 
       nginx_conf = template.render(
-          namespace=namespace
+          namespace=namespace,
+          pidfile=pidfile
       )
     except Exception as e:
       return False, messages[3020]
 
-    create_configpayload = "\n".join([
-        f'tee {nginx_conf_path}<<EOF',
+    create_config_payload = "\n".join([
+        f'tee {nginx_conf_path}s <<EOF',
         nginx_conf,
         "EOF"
         ])
 
-    launch_ngixn_payload = "\n".join([
-        f'tee {domain_path} metadata <<EOF',
-        metadata_json,
-        "EOF"
-        ])
+    # FIXME: we need to check for existing process and SIGHUP that if it exists!
+    find_process_payload = f'ps auxw | grep nginx | grep {nginx_config_path}s'
+    start_nginx_payload = 'ip netns exec {namespace} nginx -c {nginx_conf_path}s'
 
     # call rcc comms_ssh on enabled PodNet
     try:
-        create_metadata, stdout, stderr = comms_ssh(
+        create_config, stdout, stderr = comms_ssh(
             host_ip=enabled,
-            payload=create_metadata_payload,
+            payload=create_config_payload,
             username='robot',
         )
     except CouldNotConnectException:
         return False, messages[3021]
 
-    if create_metadata.exit_code != SUCCESS_CODE:
-        return False, messages[3022] + f'{create_metadata.exit_code}s.'
+    if create_config.exit_code != SUCCESS_CODE:
+        return False, messages[3022] + f'{create_config.exit_code}s.'
 
     # call rcc comms_ssh on enabled PodNet
     try:
-        create_userdata, stdout, stderr = comms_ssh(
+        start_nginx, stdout, stderr = comms_ssh(
             host_ip=enabled,
-            payload=create_userdata_payload,
+            payload=start_nginx_payload,
             username='robot',
         )
     except CouldNotConnectException:
         return False, messages[3023]
 
-    if create_userdata.exit_code != SUCCESS_CODE:
-        return False, messages[3024]  + f'{create_userdata.exit_code}s.'
+    if start_nginx.exit_code != SUCCESS_CODE:
+        return False, messages[3024]  + f'{start_nginx.exit_code}s.'
 
     # call rcc comms_ssh on disabled PodNet
     try:
-        create_metadata, stdout, stderr = comms_ssh(
+        create_config, stdout, stderr = comms_ssh(
             host_ip=disabled,
-            payload=create_metadata_payload,
+            payload=create_config_payload,
             username='robot',
         )
     except CouldNotConnectException:
         return False, messages[3031]
 
-    if create_metadata.exit_code != SUCCESS_CODE:
-        return False, messages[3032] + f'{create_metadata.exit_code}s.'
+    if create_config.exit_code != SUCCESS_CODE:
+        return False, messages[3032] + f'{create_config.exit_code}s.'
 
     # call rcc comms_ssh on disabled PodNet
     try:
-        create_userdata, stdout, stderr = comms_ssh(
+        start_nginx, stdout, stderr = comms_ssh(
             host_ip=disabled,
-            payload=create_userdata_payload,
+            payload=start_nginx_payload,
             username='robot',
         )
     except CouldNotConnectException:
         return False, messages[3033]
 
-    if create_userdata.exit_code != SUCCESS_CODE:
-        return False, messages[3034]  + f'{create_userdata.exit_code}s.'
+    if start_nginx.exit_code != SUCCESS_CODE:
+        return False, messages[3034]  + f'{start_nginx.exit_code}s.'
 
 
     return True, messages[1000]
 
 
 def scrub(
-        domain_path: str,
+        namespace: str,
+        config_file=None
 ) -> Tuple[bool, str]:
     """
     description:
-        Removes cloud-init user data and meta data files for a virtual machine on PodNet HA.
+        Removes an nginx instance for serving cloud-init userdata/metadata from a VRF network name space
 
     parameters:
-        domain_path:
-            description: path to the virtual machine's cloud-init directory.
-                         This must be the full path, up to and including the
-                         version component.
+        namespace:
+            description: VRF network name space's identifier, such as 'VRF453
             type: string
             required: true
         config_file:
@@ -227,13 +223,16 @@ def scrub(
             required: false
     return:
         description: |
-            A tuple with a boolean flag stating if the scrub was successful or not and
+            A tuple with a boolean flag stating if the build was successful or not and
             the output or error message.
         type: tuple
     """
+
+    nginx_config_path = '/etc/netns/{namespace}/nginx.conf'
+
     # Define message
     messages = {
-        1100: f'1100: Successfully removed {domain_path}/, {domain_path}/metadata and {domain_path}/userdata on both PodNet nodes.',
+        1000: f'1100: Successfully stopped nginx process and deleted {nginx_config_path}.',
         2111: f'2111: Config file {config_file} loaded.',
         3111: f'3111: Failed to load config file {config_file}, It does not exist.',
         3112: f'3112: Failed to get `ipv6_subnet` from config file {config_file}',
@@ -243,17 +242,17 @@ def scrub(
         3116: f'3116: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are True',
         3117: f'3117: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
         3118: f'3118: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
-        3121: f'3121: Failed to connect to the enabled PodNet from the config file {config_file} for remove_metadata payload',
-        3122: f'3122: Failed to create metadata file {domain_path}/metadata on the enabled PodNet. Payload exited with status ',
-        3123: f'3123: Failed to connect to the enabled PodNet from the config file {config_file} for remove_userdata payload',
-        3123: f'3124: Failed to create userdata file {domain_path}/userdata on the enabled PodNet Payload exited with status ',
-        3131: f'3131: Successfully removed `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file}',
-        3132: f'3132: Successfully removed `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to create on the disabled PodNet. '
+        3121: f'3123: Failed to connect to the enabled PodNet from the config file {config_file} for start_nginx_payload',
+        3122: f'3124: Failed to stop nginx on the enabled PodNet. Payload exited with status ',
+        3123: f'3121: Failed to connect to the enabled PodNet from the config file {config_file} for remove_config_payload',
+        3124: f'3122: Failed to delete config file {nginx_config_path} on the enabled PodNet. Payload exited with status ',
+        3131: f'3131: Successfully stopped nginx and deleted {nginx_config_path} on enabled PodNet but failed to connect to the disabled PodNet '
+              f'from the config file {config_file} for stop_nginx_payload.',
+        3132: f'3132: Successfully stopped nginx and deleted {nginx_config_path} on enabled PodNet but failed to stop nginx on the disabled PodNet. '
                'Payload exited with status ',
-        3133: f'3133: Successfully removed `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to connect to the disabled PodNet. '
-              f'from the config file {config_file}',
-        3134: f'3134: Successfully removed `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to create on the disabled PodNet. '
+        3133: f'3133: Successfully stoppend nginx and deleted {nginx_config_path} on enabled PodNet but failed to connect to the disabled PodNet '
+              f'from the config file {config_file} for remove_config_payload.',
+        3134: f'3134: Successfully stopped nginx on both PodNet nodes and deleted {nginx_config_path} on enabled PodNet but failed to stop nginx on the disabled PodNet. '
                'Payload exited with status ',
     }
 
@@ -304,77 +303,75 @@ def scrub(
         return False, messages[3118]
 
     # define payloads
-    remove_userdata_payload = f'rm -f {domain_path}/userdata'
-    remove_metadata_payload = f'rm -f {domain_path}/metadata'
+    stop_nginx_payload = f'kill $(cat {pidfile}s)'
+    delete_config_payload = f'rm -f {nginx_config_path}s'
 
-    # call rcc comms_ssh for metadata removal on enabled PodNet
+    # call rcc comms_ssh for stopping nginx on enabled PodNet
     try:
-        remove_metadata, stdout, stderr = comms_ssh(
+        stop_nginx, stdout, stderr = comms_ssh(
             host_ip=enabled,
-            payload=remove_metadata_payload,
+            payload=stop_nginx_payload,
             username='robot',
         )
     except CouldNotConnectException:
         return False, messages[3121]
 
-    if remove_metadata.exit_code != SUCCESS_CODE:
-        return False, messages[3122] + f'{remove_metadata.exit_code}s.'
+    if stop_nginx.exit_code != SUCCESS_CODE:
+        return False, messages[3122] + f'{stop_nginx.exit_code}s.'
 
-    # call rcc comms_ssh for userdata removal on enabled PodNet
+    # call rcc comms_ssh for nginx config file removal on enabled PodNet
     try:
-        remove_userdata, stdout, stderr = comms_ssh(
+        remove_config, stdout, stderr = comms_ssh(
             host_ip=enabled,
-            payload=remove_userdata_payload,
+            payload=remove_config_payload,
             username='robot',
         )
     except CouldNotConnectException:
         return False, messages[3123]
 
-    if remove_userdata.exit_code != SUCCESS_CODE:
-        return False, messages[3124]  + f'{remove_userdata.exit_code}s.'
+    if remove_config.exit_code != SUCCESS_CODE:
+        return False, messages[3124]  + f'{remove_config.exit_code}s.'
 
-    # call rcc comms_ssh for metadata removal on disabled PodNet
+    # call rcc comms_ssh for stopping nginx on disabled PodNet
     try:
-        remove_metadata, stdout, stderr = comms_ssh(
+        stop_nginx, stdout, stderr = comms_ssh(
             host_ip=disabled,
-            payload=remove_metadata_payload,
+            payload=stop_nginx_payload,
             username='robot',
         )
     except CouldNotConnectException:
         return False, messages[3131]
 
-    if remove_metadata.exit_code != SUCCESS_CODE:
-        return False, messages[3132] + f'{remove_metadata.exit_code}s.'
+    if stop_nginx.exit_code != SUCCESS_CODE:
+        return False, messages[3132] + f'{stop_nginx.exit_code}s.'
 
-    # call rcc comms_ssh for userdata removal on disabled PodNet
+    # call rcc comms_ssh for nginx config file removal on disabled PodNet
     try:
-        remove_userdata, stdout, stderr = comms_ssh(
+        remove_config, stdout, stderr = comms_ssh(
             host_ip=disabled,
-            payload=remove_userdata_payload,
+            payload=remove_config_payload,
             username='robot',
         )
     except CouldNotConnectException:
         return False, messages[3133]
 
-    if remove_userdata.exit_code != SUCCESS_CODE:
-        return False, messages[3134]  + f'{remove_userdata.exit_code}s.'
+    if remove_config.exit_code != SUCCESS_CODE:
+        return False, messages[3134]  + f'{remove_config.exit_code}s.'
 
 
     return True, messages[1100]
 
 def read(
-        domain_path: str,
+        namespace: str,
+        config_file=None
 ) -> Tuple[bool, dict, str]:
     """
     description:
-        Reads cloud-init user data and meta data files for a virtual machine on
-        PodNet HA (if any) and returns them.
+        Checks configuration file and process status of nginx process serving cloud-init userdata/metadata in a VRF namespace on the PodNet node.
 
     parameters:
-        domain_path:
-            description: path to the virtual machine's cloud-init directory.
-                         This must be the full path, up to and including the
-                         version component.
+        namespace:
+            description: VRF network name space's identifier, such as 'VRF453
             type: string
             required: true
         config_file:
@@ -383,9 +380,8 @@ def read(
             required: false
     return:
         description: |
-            A list with 3 items: (1) a boolean status flag indicating if the
-            read was successfull, (2) a dict containing the data as read from
-            the both machines' current state and (3) the output or success message.
+            A tuple with a boolean flag stating if the build was successful or not and
+            the output or error message.
         type: tuple
         items:
           read:
@@ -394,27 +390,36 @@ def read(
           data:
             type: object
             description: |
-              file contents retrieved from both podnet nodes. May be None if nothing
+              process status and file contents retrieved from both podnet nodes. May be None if nothing
               could be retrieved.
             properties:
               <podnet_ip>:
-                description: dict structure holding user data from machine <podnet_ip>
-                  type: object
-                  userdata:
+                description: structure holding process status/config file contents from machine <podnet_ip>
+                type: object
+                  process_status:
+                  type: string
                     description: |
                       The contents of the `userdata` file at domain_path. May be
                       None upon any read errors.
                     type: string
-                  metadata:
+                  config_file:
                     type: string
                     description: |
                       The contents of the `metadata` file at domain_path. May be
                       None upon any read errors.
+          errors:
+            type: array
+            description: List of success/error messages produced while reading state
+            items:
+              type: string
     """
+
+    nginx_config_path = '/etc/netns/{namespace}/nginx.conf'
+    pidfile= '/run/nginx-{namespace}s.pid'
 
     # Define message
     messages = {
-        1200: f'1200: Successfully retrieved {domain_path}/, {domain_path}/metadata and {domain_path}/userdata from both PodNet nodes.',
+        1200: f'1200: Successfully retrieved nginx process status and {nginx_config_path}s from both PodNet nodes.',
         2211: f'2211: Config file {config_file} loaded.',
         3211: f'3211: Failed to load config file {config_file}, It does not exist.',
         3212: f'3212: Failed to get `ipv6_subnet` from config file {config_file}',
@@ -424,21 +429,23 @@ def read(
         3216: f'3216: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are True',
         3217: f'3217: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
         3218: f'3218: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
-        3221: f'3221: Failed to connect to the enabled PodNet from the config file {config_file} for read_metadata payload',
-        3222: f'3222: Failed to read metadata file {domain_path}/metadata on the enabled PodNet. Payload exited with status ',
-        3223: f'3223: Failed to connect to the enabled PodNet from the config file {config_file} for read_userdata payload',
-        3223: f'3224: Failed to read userdata file {domain_path}/userdata on the enabled PodNet Payload exited with status ',
-        3231: f'3231: Successfully read `metadata` and `userdata` from {domain_path}/ on enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file}',
-        3232: f'3232: Successfully read `metadata` and `userdata` from {domain_path}/ on enabled PodNet but failed to read on the disabled PodNet. '
-               'Payload exited with status ',
-        3233: f'3233: Successfully read `metadata` and `userdata` from {domain_path}/ on enabled PodNet but failed to connect to the disabled PodNet. '
-              f'from the config file {config_file}',
-        3234: f'3234: Successfully read `metadata` and `userdata` from {domain_path}/ on enabled PodNet but failed to read on the disabled PodNet. '
+        3221: f'3221: Failed to connect to the enabled PodNet from the config file {config_file} for read_config_payload',
+        3222: f'3222: Failed to read config file {nginx_config_path}s on the enabled PodNet. Payload exited with status ',
+        3223: f'3223: Failed to connect to the enabled PodNet from the config file {config_file} for find_process_payload',
+        3223: f'3224: Failed to execute find_process_payload on the enabled PodNet node. Payload exited with status ',
+        3231: f'3231: Successfully retrieved nginx process status and {nginx_config_path}s from enabled PodNet but failed to connect to the disabled PodNet '
+              f'from the config file {config_file} for read_config_payload',
+        3232: f'3232: Successfully retrieved nginx process status and {nginx_config_path}s from enabled PodNet but failed to execute read_config_payload '
+               'on the disabled PodNet. Payload exited with status ',
+        3233: f'3233: Successfully retrieved {nginx_config_file}s from both PodNet nodes but failed to connect to the disabled PodNet '
+              f'from the config file {config_file} for find_process_payload.',
+        3234: f'3234: Successfully retrieved {nginx_config_file}s from both PodNet nodes but failed to execute find_process_payload on the disabled PodNet. '
                'Payload exited with status ',
     }
 
+    retval = True
     data_dict = None
+    message_list = ()
 
     # Default config_file if it is None
     if config_file is None:
@@ -446,19 +453,22 @@ def read(
 
     # Get load config from config_file
     if not Path(config_file).exists():
-        return False, data_dict, messages[3211]
+        retval = False
+        message_list.append(messages[3211])
     with Path(config_file).open('r') as file:
         config = json.load(file)
 
     # Get the ipv6_subnet from config_file
     ipv6_subnet = config.get('ipv6_subnet', None)
     if ipv6_subnet is None:
-        return False, data_dict, messages[3212]
+        retval = False
+        message_list.append(messages[3212])
     # Verify the ipv6_subnet value
     try:
         ipaddress.ip_network(ipv6_subnet)
     except ValueError:
-        return False, data_dict, messages[3213]
+        retval = False
+        message_list.append(messages[3213])
 
     # Get the PodNet Mgmt ips from ipv6_subnet
     podnet_a = f'{ipv6_subnet.split("/")[0]}10:0:2'
@@ -467,22 +477,24 @@ def read(
     data_dict = {}
 
     data_dict[podnet_a] = {
-        'userdata': None,
-        'metadata': None,
+        'process_status': None,
+        'config_file': None,
     }
 
     data_dict[podnet_b] = {
-        'userdata': None,
-        'metadata': None,
+        'process_status': None,
+        'config_file': None,
     }
 
     # Get `podnet_a_enabled` and `podnet_b_enabled`
     podnet_a_enabled = config.get('podnet_a_enabled', None)
     if podnet_a_enabled is None:
-        return False, data_dict, messages[3214]
+        retval = False
+        message_list.append(messages[3214])
     podnet_b_enabled = config.get('podnet_b_enabled', None)
     if podnet_a_enabled is None:
-        return False, data_dict, messages[3215]
+        retval = False
+        message_list.append(messages[3215])
 
     # First run on enabled PodNet
     if podnet_a_enabled is True and podnet_b_enabled is False:
@@ -492,74 +504,85 @@ def read(
         enabled = podnet_b
         disabled = podnet_a
     elif podnet_a_enabled is True and podnet_b_enabled is True:
-        return False, data_dict, messages[3216]
+        retval = False
+        message_list.append(messages[3216])
     elif podnet_a_enabled is False and podnet_b_enabled is False:
-        return False, data_dict, messages[3217]
+        retval = False
+        message_list.append(messages[3217])
     else:
-        return False, data_dict, messages[3218]
+        retval = False
+        message_list.append(messages[3218])
 
     # define payloads
-    read_userdata_payload = f'cat {domain_path}/userdata'
-    read_metadata_payload = f'cat {domain_path}/metadata'
+    read_config_payload = f'cat {nginx_config_path}'
+    find_process_payload = f'ps auxw | grep nginx | grep {nginx_config_path}s'
 
-    # call rcc comms_ssh for metadata retrieval from enabled PodNet
+    # call rcc comms_ssh for config retrieval from enabled PodNet
     try:
-        read_metadata, stdout, stderr = comms_ssh(
+        read_config, stdout, stderr = comms_ssh(
             host_ip=enabled,
-            payload=read_metadata_payload,
+            payload=read_config_payload,
             username='robot',
         )
     except CouldNotConnectException:
-        return False, data_dict, messages[3221]
+        retval = False
+        message_list.append(messages[3221])
 
-    if read_metadata.exit_code != SUCCESS_CODE:
-        return False, data_dict, messages[3222] + f'{read_metadata.exit_code}s.'
+    if read_config.exit_code != SUCCESS_CODE:
+        retval = False
+        message_list.append(messages[3222] + f'{read_config.exit_code}s.')
 
-    data_dict[enabled]['metadata'] = stdout
+    data_dict[enabled]['config_file'] = stdout
 
-    # call rcc comms_ssh for userdata retrieval from enabled PodNet
+    # call rcc comms_ssh for process_status retrieval from enabled PodNet
     try:
-        read_userdata, stdout, stderr = comms_ssh(
+        read_process_status, stdout, stderr = comms_ssh(
             host_ip=enabled,
-            payload=read_userdata_payload,
+            payload=find_process_payload,
             username='robot',
         )
     except CouldNotConnectException:
-        return False, data_dict, messages[3223]
+        retval = False
+        message_list.append(messages[3223])
 
-    if read_userdata.exit_code != SUCCESS_CODE:
-        return False, data_dict, messages[3224]  + f'{read_userdata.exit_code}s.'
+    if read_process_status.exit_code != SUCCESS_CODE:
+        retval = False
+        message_list.append(messages[3224]  + f'{read_process_status.exit_code}s.')
 
-    data_dict[enabled]['userdata'] = stdout
+    data_dict[enabled]['process_status'] = stdout
 
-    # call rcc comms_ssh for metadata retrieval from disabled PodNet
+    # call rcc comms_ssh for config retrieval from disabled PodNet
     try:
-        read_metadata, stdout, stderr = comms_ssh(
+        read_config, stdout, stderr = comms_ssh(
             host_ip=disabled,
-            payload=read_metadata_payload,
+            payload=read_config_payload,
             username='robot',
         )
     except CouldNotConnectException:
-        return False, data_dict, messages[3231]
+        retval = False
+        message_list.append(messages[3231])
 
-    if read_metadata.exit_code != SUCCESS_CODE:
-        return False, data_dict, messages[3232] + f'{read_metadata.exit_code}s.'
+    if read_config.exit_code != SUCCESS_CODE:
+        retval = False
+        message_list.append(messages[3232] + f'{read_config.exit_code}s.')
 
-    data_dict[enabled]['metadata'] = stdout
+    data_dict[enabled]['config_file'] = stdout
 
-    # call rcc comms_ssh for userdata retrieval from disabled PodNet
+    # call rcc comms_ssh for process_status retrieval from disabled PodNet
     try:
-        read_userdata, stdout, stderr = comms_ssh(
+        read_process_status, stdout, stderr = comms_ssh(
             host_ip=disabled,
-            payload=read_userdata_payload,
+            payload=find_process_payload,
             username='robot',
         )
     except CouldNotConnectException:
-        return False, data_dict, messages[3233]
+        retval = False
+        message_list.append(messages[3233])
 
-    if read_userdata.exit_code != SUCCESS_CODE:
-        return False, data_dict, messages[3234]  + f'{read_userdata.exit_code}s.'
+    if read_process_status.exit_code != SUCCESS_CODE:
+        retval = False
+        message_list.append(messages[3234]  + f'{read_process_status.exit_code}s.')
 
-    data_dict[enabled]['userdata'] = stdout
+    data_dict[enabled]['process_status'] = stdout
 
-    return True, data_dict, messages[1200]
+    return retval, data_dict, messages[1200]
