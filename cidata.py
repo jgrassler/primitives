@@ -37,15 +37,9 @@ def build(
                          version component.
             type: string
             required: true
-        domain:
-            description: libvirt domain name for VM. Typically composed from
-                         numerical project ID and VM ID as follows:
-                         `<project_id>_<domain_id>`.
-            type: string
-            required: true
-        interfaces:
-            description: data structure describing the machine's network configuration
-            type: list
+        metadata:
+            description: data structure that contains the machine's metadata
+            type: object
             required: true
         config_file:
             description: path to the config.json file
@@ -87,14 +81,11 @@ def build(
                'Payload exited with status ',
     }
 
-    metadata_dict = {
-      "instance-id": domain,
-      "network": {
-        "interfaces": interfaces
-      }
-    }
-
-    metadata = json.dumps(metadata_dict)
+    metadata_json = json.dumps(
+        metadata,
+        indent=1,
+        sort_keys=True,
+    )
 
     # Default config_file if it is None
     if config_file is None:
@@ -151,7 +142,7 @@ def build(
 
     create_metadata_payload = "\n".join([
         f'tee {domain_path} metadata <<EOF',
-        metadata,
+        metadata_json,
         "EOF"
         ])
 
