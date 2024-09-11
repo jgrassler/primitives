@@ -124,7 +124,7 @@ def build(
             required: true
     return:
         description: |
-            A tuple with a boolean flag stating the build was successful or not and
+            A tuple with a boolean flag stating if the build was successful or not and
             the output or error message.
         type: tuple
     """
@@ -295,7 +295,7 @@ def scrub(
             required: false
     return:
         description: |
-            A tuple with a boolean flag stating the build was successful or not and
+            A tuple with a boolean flag stating if the scrub was successful or not and
             the output or error message.
         type: tuple
     """
@@ -429,3 +429,205 @@ def scrub(
 
 
     return True, messages[1100]
+
+def read(
+        domain_path: str,
+) -> Tuple[bool, dict, str]:
+    """
+    description:
+        Reads cloud-init user data and meta data files for a virtual machine on
+        PodNet HA (if any) and returns them.
+
+    parameters:
+        domain_path:
+            description: path to the virtual machine's cloud-init directory.
+                         This must be the full path, up to and including the
+                         version component.
+            type: string
+            required: true
+        config_file:
+            description: path to the config.json file
+            type: string
+            required: false
+    return:
+        description: |
+            A list with 3 items: (1) a boolean status flag indicating if the
+            read was successfull, (2) a dict containing the data as read from
+            the both machines' current state and (3) the output or success message.
+        type: tuple
+        items:
+          read:
+            description: True if all read operations were successful, False otherwise.
+            type: boolean
+          data:
+            type: object
+            description: |
+              file contents retrieved from both podnet nodes. May be None if nothing
+              could be retrieved.
+            properties:
+              <podnet_ip>:
+                description: dict structure holding user data from machine <podnet_ip>
+                  type: object
+                  userdata:
+                    description: |
+                      The contents of the `userdata` file at domain_path. May be
+                      None upon any read errors.
+                    type: string
+                  metadata:
+                    type: string
+                    description: |
+                      The contents of the `metadata` file at domain_path. May be
+                      None upon any read errors.
+    """
+
+    # Define message
+    messages = {
+        1200: f'1200: Successfully retrieved {domain_path}/, {domain_path}/metadata and {domain_path}/userdata from both PodNet nodes.',
+        2211: f'2211: Config file {config_file} loaded.',
+        3211: f'3211: Failed to load config file {config_file}, It does not exist.',
+        3212: f'3212: Failed to get `ipv6_subnet` from config file {config_file}',
+        3213: f'3213: Invalid value for `ipv6_subnet` from config file {config_file}',
+        3214: f'3214: Failed to get `podnet_a_enabled` from config file {config_file}',
+        3215: f'3215: Failed to get `podnet_b_enabled` from config file {config_file}',
+        3216: f'3216: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are True',
+        3217: f'3217: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
+        3218: f'3218: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
+        3221: f'3221: Failed to connect to the enabled PodNet from the config file {config_file} for read_metadata payload',
+        3222: f'3222: Failed to read metadata file {domain_path}/metadata on the enabled PodNet. Payload exited with status ',
+        3223: f'3223: Failed to connect to the enabled PodNet from the config file {config_file} for read_userdata payload',
+        3223: f'3224: Failed to read userdata file {domain_path}/userdata on the enabled PodNet Payload exited with status ',
+        3231: f'3231: Successfully read `metadata` and `userdata` from {domain_path}/ on enabled PodNet but failed to connect to the disabled PodNet '
+              f'from the config file {config_file}',
+        3232: f'3232: Successfully read `metadata` and `userdata` from {domain_path}/ on enabled PodNet but failed to read on the disabled PodNet. '
+               'Payload exited with status ',
+        3233: f'3233: Successfully read `metadata` and `userdata` from {domain_path}/ on enabled PodNet but failed to connect to the disabled PodNet. '
+              f'from the config file {config_file}',
+        3234: f'3234: Successfully read `metadata` and `userdata` from {domain_path}/ on enabled PodNet but failed to read on the disabled PodNet. '
+               'Payload exited with status ',
+    }
+
+    data_dict = None
+
+    # Default config_file if it is None
+    if config_file is None:
+        config_file = '/etc/cloudcix/pod/configs/config.json'
+
+    # Get load config from config_file
+    if not Path(config_file).exists():
+        return False, data_dict, messages[3211]
+    with Path(config_file).open('r') as file:
+        config = json.load(file)
+
+    # Get the ipv6_subnet from config_file
+    ipv6_subnet = config.get('ipv6_subnet', None)
+    if ipv6_subnet is None:
+        return False, data_dict, messages[3212]
+    # Verify the ipv6_subnet value
+    try:
+        ipaddress.ip_network(ipv6_subnet)
+    except ValueError:
+        return False, data_dict, messages[3213]
+
+    # Get the PodNet Mgmt ips from ipv6_subnet
+    podnet_a = f'{ipv6_subnet.split("/")[0]}10:0:2'
+    podnet_b = f'{ipv6_subnet.split("/")[0]}10:0:3'
+
+    data_dict = {}
+
+    data_dict[podnet_a] = {
+        'userdata': None,
+        'metadata': None,
+    }
+
+    data_dict[podnet_b] = {
+        'userdata': None,
+        'metadata': None,
+    }
+
+    # Get `podnet_a_enabled` and `podnet_b_enabled`
+    podnet_a_enabled = config.get('podnet_a_enabled', None)
+    if podnet_a_enabled is None:
+        return False, data_dict, messages[3214]
+    podnet_b_enabled = config.get('podnet_b_enabled', None)
+    if podnet_a_enabled is None:
+        return False, data_dict, messages[3215]
+
+    # First run on enabled PodNet
+    if podnet_a_enabled is True and podnet_b_enabled is False:
+        enabled = podnet_a
+        disabled = podnet_b
+    elif podnet_a_enabled is False and podnet_b_enabled is True:
+        enabled = podnet_b
+        disabled = podnet_a
+    elif podnet_a_enabled is True and podnet_b_enabled is True:
+        return False, data_dict, messages[3216]
+    elif podnet_a_enabled is False and podnet_b_enabled is False:
+        return False, data_dict, messages[3217]
+    else:
+        return False, data_dict, messages[3218]
+
+    # define payloads
+    read_userdata_payload = f'cat {domain_path}/userdata'
+    read_metadata_payload = f'cat {domain_path}/metadata'
+
+    # call rcc comms_ssh for metadata retrieval from enabled PodNet
+    try:
+        read_metadata, stdout, stderr = comms_ssh(
+            host_ip=enabled,
+            payload=read_metadata_payload,
+            username='robot',
+        )
+    except CouldNotConnectException:
+        return False, data_dict, messages[3221]
+
+    if read_metadata.exit_code != SUCCESS_CODE:
+        return False, data_dict, messages[3222] + f'{read_metadata.exit_code}s.'
+
+    data_dict[enabled]['metadata'] = stdout
+
+    # call rcc comms_ssh for userdata retrieval from enabled PodNet
+    try:
+        read_userdata, stdout, stderr = comms_ssh(
+            host_ip=enabled,
+            payload=read_userdata_payload,
+            username='robot',
+        )
+    except CouldNotConnectException:
+        return False, data_dict, messages[3223]
+
+    if read_userdata.exit_code != SUCCESS_CODE:
+        return False, data_dict, messages[3224]  + f'{read_userdata.exit_code}s.'
+
+    data_dict[enabled]['userdata'] = stdout
+
+    # call rcc comms_ssh for metadata retrieval from disabled PodNet
+    try:
+        read_metadata, stdout, stderr = comms_ssh(
+            host_ip=disabled,
+            payload=read_metadata_payload,
+            username='robot',
+        )
+    except CouldNotConnectException:
+        return False, data_dict, messages[3231]
+
+    if read_metadata.exit_code != SUCCESS_CODE:
+        return False, data_dict, messages[3232] + f'{read_metadata.exit_code}s.'
+
+    data_dict[enabled]['metadata'] = stdout
+
+    # call rcc comms_ssh for userdata retrieval from disabled PodNet
+    try:
+        read_userdata, stdout, stderr = comms_ssh(
+            host_ip=disabled,
+            payload=read_userdata_payload,
+            username='robot',
+        )
+    except CouldNotConnectException:
+        return False, data_dict, messages[3233]
+
+    if read_userdata.exit_code != SUCCESS_CODE:
+        return False, data_dict, messages[3234]  + f'{read_userdata.exit_code}s.'
+
+    data_dict[enabled]['userdata'] = stdout
+
+    return True, data_dict, messages[1200]
