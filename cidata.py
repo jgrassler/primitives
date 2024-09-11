@@ -1,5 +1,5 @@
 """
-Primitive to Build and Delete directories on PodNet HA
+Primitive to Build, Read and Scrub cloud-init userdata/metadata payloads on PodNet HA
 """
 
 # stdlib
