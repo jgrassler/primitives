@@ -23,10 +23,9 @@ SUCCESS_CODE = 0
 
 def build(
         domain_path: str,
-        domain: str,
-        interfaces: dict,
+        metadata: dict,
+        userdata: str
         config_file=None,
-        userdata=""
 ) -> Tuple[bool, str]:
     """
     description:
