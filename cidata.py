@@ -32,9 +32,9 @@ def build(
 
     parameters:
         domain_path:
-            description: path to the virtual machine's cloud-init directory.
-                         This must be the full path, up to and including the
-                         metaddata version component.
+            description: | path to the virtual machine's cloud-init directory.
+                           This must be the full path, up to and including the
+                           metaddata version component.
             type: string
             required: true
         metadata:
@@ -45,9 +45,9 @@ def build(
             instance_id:
               type: string
               required: true
-              description: libvirt domain name for VM. Typically composed from
-                           numerical project ID and VM ID as follows:
-                           `<project_id>_<domain_id>`.
+              description: | libvirt domain name for VM. Typically composed from
+                             numerical project ID and VM ID as follows:
+                             `<project_id>_<domain_id>`.
             network:
               type: object
               required: true
@@ -71,8 +71,8 @@ def build(
                       description: the machine's search domains for unqualified host names
                       required: false
                       items:
-                        description: a search domain to qualify unqualified
-                                     host names with, such as `cloudcix.com`
+                        description: | a search domain to qualify unqualified
+                                       host names with, such as `cloudcix.com`
                         required: false
                         type: string
                 interfaces:
@@ -81,8 +81,8 @@ def build(
                   description: The VM's network interface configuration
                   properties:
                     mac_address:
-                      description: The interface's MAC address (colon separated
-                                   bytes, lower case)
+                      description: | The interface's MAC address (colon separated
+                                     bytes, lower case)
                       type: string
                       required: true
                     addresses:
@@ -90,9 +90,9 @@ def build(
                       type: array
                       required: true
                       items:
-                        description: an IP address with subnet mask specified
-                                     in CIDR notation as understood by ip(8), e.g.
-                                     `10.0.5.221/24`
+                        description: | an IP address with subnet mask specified
+                                       in CIDR notation as understood by ip(8), e.g.
+                                       `10.0.5.221/24`
                         type: string
                         required: true
                     routes:
@@ -102,16 +102,16 @@ def build(
                       required: false
                       properties:
                         to:
-                          description: the route's destination. either a network
-                                       address with subnet mask specified in
-                                       CIDR notation, e.g. `10.0.6.0/8` or the
-                                       keyword `default` to indicate a default
-                                       route.
+                          description: | the route's destination. either a network
+                                         address with subnet mask specified in
+                                         CIDR notation, e.g. `10.0.6.0/8` or the
+                                         keyword `default` to indicate a default
+                                         route.
                           type: string
                           required: true
                         via:
-                          description: IP address of the route's next hop, e.g.
-                                       `10.0.0.1`.
+                          description: | IP address of the route's next hop, e.g.
+                                         `10.0.0.1`.
                           type: string
                           required: true
         config_file:
