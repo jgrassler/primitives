@@ -121,7 +121,7 @@ def build(
         userdata:
             description: the cloud-init user data payload to pass into the virtual machine
             type: string
-            required: false
+            required: true
     return:
         description: |
             A tuple with a boolean flag stating the build was successful or not and
