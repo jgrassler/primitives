@@ -14,6 +14,8 @@ from cloudcix.rcc import comms_ssh, CouldNotConnectException
 
 __all__ = [
     'build',
+    'scrub',
+    'read',
 ]
 
 SUCCESS_CODE = 0
