@@ -1,11 +1,14 @@
 """
 Primitive to Build, Read and Scrub nginx for cloud-init userdata/metadata delivery on PodNet HA
 """
-
+# 3rd party modules
+import jinja2
 # stdlib
 import json
 import ipaddress
+import os
 from pathlib import Path
+from textwrap import dedent
 from typing import Tuple
 # lib
 from cloudcix.rcc import comms_ssh, CouldNotConnectException
@@ -20,6 +23,7 @@ __all__ = [
 
 SUCCESS_CODE = 0
 
+template_path = os.path.join(os.path.dirname(__file__), 'templates', __name__.split(".").pop())
 
 def build(
         domain_path: str,
@@ -30,109 +34,29 @@ def build(
 ) -> Tuple[bool, str]:
     """
     description:
-        Creates cloud-init user data and meta data files for a virtual machine on PodNet HA.
+        Configures and launches an nginx instance for serving cloud-init userdata/metadata from a VRF network name space
 
     parameters:
-        domain_path:
-            description: | path to the virtual machine's cloud-init directory.
-                           This must be the full path, up to and including the
-                           metaddata version component.
+        namespace:
+            description: VRF network name space's identifier, such as 'VRF453
             type: string
             required: true
-        metadata:
-          description: data structure that contains the machine's metadata
-          type: object
-          required: true
-          properties:
-            instance_id:
-              type: string
-              required: true
-              description: | libvirt domain name for VM. Typically composed from
-                             numerical project ID and VM ID as follows:
-                             `<project_id>_<domain_id>`.
-            network:
-              type: object
-              required: true
-              description: the VM's network configuration
-              properties:
-                nameservers:
-                  description: the VM's DNS configuration
-                  type: object
-                  required: true
-                  properties:
-                    addresses:
-                      description: list of name server IP addresses
-                      type: array
-                      required: true
-                      items:
-                        description: a name server IP address such as `8.8.8.8`. At least one must be specified.
-                        type: string
-                        required: true
-                    search:
-                      type: array
-                      description: the machine's search domains for unqualified host names
-                      required: false
-                      items:
-                        description: | a search domain to qualify unqualified
-                                       host names with, such as `cloudcix.com`
-                        required: false
-                        type: string
-                interfaces:
-                  type: object
-                  required: true
-                  description: The VM's network interface configuration
-                  properties:
-                    mac_address:
-                      description: | The interface's MAC address (colon separated
-                                     bytes, lower case)
-                      type: string
-                      required: true
-                    addresses:
-                      description: The interface's IP addresses. At least one is required.
-                      type: array
-                      required: true
-                      items:
-                        description: | an IP address with subnet mask specified
-                                       in CIDR notation as understood by ip(8), e.g.
-                                       `10.0.5.221/24`
-                        type: string
-                        required: true
-                    routes:
-                      description: routes to create for this particular interface. While optional, setting at
-                                   least a default route is highly recommended.
-                      type: object
-                      required: false
-                      properties:
-                        to:
-                          description: | the route's destination. either a network
-                                         address with subnet mask specified in
-                                         CIDR notation, e.g. `10.0.6.0/8` or the
-                                         keyword `default` to indicate a default
-                                         route.
-                          type: string
-                          required: true
-                        via:
-                          description: | IP address of the route's next hop, e.g.
-                                         `10.0.0.1`.
-                          type: string
-                          required: true
         config_file:
             description: path to the config.json file
             type: string
             required: false
-        userdata:
-            description: the cloud-init user data payload to pass into the virtual machine
-            type: string
-            required: true
     return:
         description: |
             A tuple with a boolean flag stating if the build was successful or not and
             the output or error message.
         type: tuple
     """
+
+    nginx_config_path = '/etc/netns/{namespace}/nginx.conf'
+
     # Define message
     messages = {
-        1000: f'1000: Successfully created {domain_path}/metadata and {domain_path}/userdata on both PodNet nodes.',
+        1000: f'1000: Successfully created and {nginx_config_path} and launched nginx process on both PodNet nodes.',
         2111: f'2011: Config file {config_file} loaded.',
         3011: f'3011: Failed to load config file {config_file}, It does not exist.',
         3012: f'3012: Failed to get `ipv6_subnet` from config file {config_file}',
@@ -142,25 +66,20 @@ def build(
         3016: f'3016: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are True',
         3017: f'3017: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
         3018: f'3018: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
-        3021: f'3021: Failed to connect to the enabled PodNet from the config file {config_file} for create_metadata payload',
-        3022: f'3022: Failed to create metadata file {domain_path}/metadata on the enabled PodNet. Payload exited with status ',
-        3023: f'3023: Failed to connect to the enabled PodNet from the config file {config_file} for create_userdata payload',
-        3023: f'3024: Failed to create userdata file {domain_path}/userdata on the enabled PodNet Payload exited with status ',
-        3031: f'3031: Successfully created `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file}',
-        3032: f'3032: Successfully created `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to create on the disabled PodNet. '
+        3019: f'3019: Failed to render jinja2 template for {nginx_conf_path}',
+        3021: f'3021: Failed to connect to the enabled PodNet from the config file {config_file} for create_config_payload',
+        3022: f'3022: Failed to create config file {nginx_config_path} on the enabled PodNet. Payload exited with status ',
+        3023: f'3023: Failed to connect to the enabled PodNet from the config file {config_file} for launch_nginx_payload',
+        3023: f'3024: Failed to launch nginx on the enabled PodNet. Payload exited with status ',
+        3031: f'3031: Successfully created {nginx_config_path} and launched nginx on enabled PodNet but failed to connect to the disabled PodNet '
+              f'from the config file {config_file} for create_config_payload.',
+        3032: f'3032: Successfully created {nginx_config_path} and launched nginx on enabled PodNet but failed to create {nginx_config_path} on the disabled PodNet. '
                'Payload exited with status ',
-        3033: f'3033: Successfully created `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to connect to the disabled PodNet. '
-              f'from the config file {config_file}',
-        3034: f'3034: Successfully created `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to create on the disabled PodNet. '
+        3033: f'3033: Successfully created {nginx_config_path} on both PodNet nodes and launched nginx on enabled PodNet but failed to connect to the disabled PodNet '
+              f'from the config file {config_file} for launch_nginx_payload.',
+        3034: f'3034: Successfully created {nginx_config_path} on both PodNet nodes and launched nginx on enabled PodNet but failed to launch nginx on the disabled PodNet. '
                'Payload exited with status ',
     }
-
-    metadata_json = json.dumps(
-        metadata,
-        indent=1,
-        sort_keys=True,
-    )
 
     # Default config_file if it is None
     if config_file is None:
@@ -208,14 +127,25 @@ def build(
     else:
         return False, messages[3018]
 
-    # define payloads
-    create_userdata_payload = "\n".join([
-        f'tee {domain_path} userdata <<EOF',
-        userdata,
+    try:
+      jenv = jinja2.Environment(loader=jinja2.FileSystemLoader(
+          os.path.join(template_path))
+      )
+      template = jenv.get_template("nginx.conf.j2")
+
+      nginx_conf = template.render(
+          namespace=namespace
+      )
+    except Exception as e:
+      return False, messages[3020]
+
+    create_configpayload = "\n".join([
+        f'tee {nginx_conf_path}<<EOF',
+        nginx_conf,
         "EOF"
         ])
 
-    create_metadata_payload = "\n".join([
+    launch_ngixn_payload = "\n".join([
         f'tee {domain_path} metadata <<EOF',
         metadata_json,
         "EOF"
