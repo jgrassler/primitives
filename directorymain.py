@@ -58,7 +58,7 @@ def build(
         3017: f'3017: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
         3018: f'3018: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
         3021: f'3021: Failed to connect to the enabled PodNet from the config file {config_file}',
-        3022: f'3022: Failed to create directory {path} on the enabled PodNet'
+        3022: f'3022: Failed to create directory {path} on the enabled PodNet',
         3031: f'3031: Successfully created directory {path} on enabled PodNet but Failed to connect to the disabled PodNet '
               f'from the config file {config_file}',
         3032: f'3032: Successfully created directory {path} on enabled PodNet but Failed to create on the disabled PodNet',
