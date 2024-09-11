@@ -301,27 +301,27 @@ def scrub(
     """
     # Define message
     messages = {
-        1100: f'1000: Successfully removed {domain_path}/, {domain_path}/metadata and {domain_path}/userdata on both PodNet nodes.',
-        2111: f'2011: Config file {config_file} loaded.',
-        3111: f'3011: Failed to load config file {config_file}, It does not exist.',
-        3112: f'3012: Failed to get `ipv6_subnet` from config file {config_file}',
-        3113: f'3013: Invalid value for `ipv6_subnet` from config file {config_file}',
-        3114: f'3014: Failed to get `podnet_a_enabled` from config file {config_file}',
-        3115: f'3015: Failed to get `podnet_b_enabled` from config file {config_file}',
-        3116: f'3016: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are True',
-        3117: f'3017: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
-        3118: f'3018: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
-        3121: f'3021: Failed to connect to the enabled PodNet from the config file {config_file} for remove_metadata payload',
-        3122: f'3022: Failed to create metadata file {domain_path}/metadata on the enabled PodNet. Payload exited with status ',
-        3123: f'3023: Failed to connect to the enabled PodNet from the config file {config_file} for remove_userdata payload',
-        3123: f'3024: Failed to create userdata file {domain_path}/userdata on the enabled PodNet Payload exited with status ',
-        3131: f'3031: Successfully removed `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to connect to the disabled PodNet '
+        1100: f'1100: Successfully removed {domain_path}/, {domain_path}/metadata and {domain_path}/userdata on both PodNet nodes.',
+        2111: f'2111: Config file {config_file} loaded.',
+        3111: f'3111: Failed to load config file {config_file}, It does not exist.',
+        3112: f'3112: Failed to get `ipv6_subnet` from config file {config_file}',
+        3113: f'3113: Invalid value for `ipv6_subnet` from config file {config_file}',
+        3114: f'3114: Failed to get `podnet_a_enabled` from config file {config_file}',
+        3115: f'3115: Failed to get `podnet_b_enabled` from config file {config_file}',
+        3116: f'3116: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are True',
+        3117: f'3117: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
+        3118: f'3118: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
+        3121: f'3121: Failed to connect to the enabled PodNet from the config file {config_file} for remove_metadata payload',
+        3122: f'3122: Failed to create metadata file {domain_path}/metadata on the enabled PodNet. Payload exited with status ',
+        3123: f'3123: Failed to connect to the enabled PodNet from the config file {config_file} for remove_userdata payload',
+        3123: f'3124: Failed to create userdata file {domain_path}/userdata on the enabled PodNet Payload exited with status ',
+        3131: f'3131: Successfully removed `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to connect to the disabled PodNet '
               f'from the config file {config_file}',
-        3132: f'3032: Successfully removed `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to create on the disabled PodNet. '
+        3132: f'3132: Successfully removed `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to create on the disabled PodNet. '
                'Payload exited with status ',
-        3133: f'3033: Successfully removed `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to connect to the disabled PodNet. '
+        3133: f'3133: Successfully removed `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to connect to the disabled PodNet. '
               f'from the config file {config_file}',
-        3134: f'3034: Successfully removed `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to create on the disabled PodNet. '
+        3134: f'3134: Successfully removed `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to create on the disabled PodNet. '
                'Payload exited with status ',
     }
 
