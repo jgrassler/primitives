@@ -50,7 +50,7 @@ def build(
     """
 
     nginx_config_path = '/etc/netns/{namespace}/nginx.conf'
-    pidfile= '/run/nginx-{namespace}s.pid'
+    pidfile= '/etc/netns/{namespace}/nginx.pid'
 
     # Define message
     messages = {
@@ -484,7 +484,7 @@ def read(
     """
 
     nginx_config_path = '/etc/netns/{namespace}/nginx.conf'
-    pidfile= '/run/nginx-{namespace}s.pid'
+    pidfile = '/etc/netns/{namespace}/nginx.conf'
 
     # Define message
     messages = {
