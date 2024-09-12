@@ -217,7 +217,7 @@ def build(
     except CouldNotConnectException:
         return False, messages[3023]
 
-    if create_config != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         return False, messages[3024] + f'{exit_code}s.'
 
     # call rcc comms_ssh on enabled PodNet to create config
@@ -230,7 +230,7 @@ def build(
     except CouldNotConnectException:
         return False, messages[3025]
 
-    if create_hosts != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         return False, messages[3026] + f'{exit_code}s.'
 
     if reload_dnsmasq_payload is not None:
@@ -244,7 +244,7 @@ def build(
         except CouldNotConnectException:
             return False, messages[3027]
 
-        if reload_dnsmasq != SUCCESS_CODE:
+        if exit_code != SUCCESS_CODE:
             return False, messages[3028]  + f'{exit_code}s.'
     else:
         # call rcc comms_ssh on enabled PodNet
@@ -257,7 +257,7 @@ def build(
         except CouldNotConnectException:
             return False, messages[3029]
 
-        if start_dnsmasq != SUCCESS_CODE:
+        if exit_code != SUCCESS_CODE:
             return False, messages[3030]  + f'{exit_code}s.'
 
     # call rcc comms_ssh on disabled PodNet to find existing process
@@ -271,7 +271,7 @@ def build(
         return False, messages[3041]
 
     reload_dnsmasq_payload = None
-    if (existing_process == SUCCESS_CODE) and (stdout != ""):
+    if (exit_code == SUCCESS_CODE) and (stdout != ""):
         reload_dnsmasq_payload = f'kill -HUP {stdout}s'
     else:
        return False, messages[3042] + f'{exit_code}s.'
@@ -286,7 +286,7 @@ def build(
     except CouldNotConnectException:
         return False, messages[3043]
 
-    if create_config != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         return False, messages[3044] + f'{exit_code}s.'
 
     # call rcc comms_ssh on disabled PodNet to create config
@@ -299,7 +299,7 @@ def build(
     except CouldNotConnectException:
         return False, messages[3045]
 
-    if create_hosts != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         return False, messages[3046] + f'{exit_code}s.'
 
     if reload_dnsmasq_payload is not None:
@@ -313,7 +313,7 @@ def build(
         except CouldNotConnectException:
             return False, messages[3047]
 
-        if reload_dnsmasq != SUCCESS_CODE:
+        if exit_code != SUCCESS_CODE:
             return False, messages[3048]  + f'{exit_code}s.'
     else:
         # call rcc comms_ssh on disabled PodNet
@@ -326,7 +326,7 @@ def build(
         except CouldNotConnectException:
             return False, messages[3049]
 
-        if start_dnsmasq != SUCCESS_CODE:
+        if exit_code != SUCCESS_CODE:
             return False, messages[3050]  + f'{exit_code}s.'
 
     return True, messages[1000]
@@ -482,7 +482,7 @@ def scrub(
     except CouldNotConnectException:
         return False, messages[3123]
 
-    if remove_config != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         return False, messages[3124]  + f'{exit_code}s.'
 
     # call rcc comms_ssh on disabled PodNet to find existing process
@@ -525,7 +525,7 @@ def scrub(
     except CouldNotConnectException:
         return False, messages[3133]
 
-    if remove_config != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         return False, messages[3134]  + f'{exit_code}s.'
 
     return True, messages[1100]
@@ -712,7 +712,7 @@ def read(
         retval = False
         message_list.append(messages[3221])
 
-    if read_config != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         retval = False
         message_list.append(messages[3222] + f'{exit_code}s.')
 
@@ -729,7 +729,7 @@ def read(
         retval = False
         message_list.append(messages[3223])
 
-    if read_hosts != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         retval = False
         message_list.append(messages[3224] + f'{exit_code}s.')
 
@@ -746,7 +746,7 @@ def read(
         retval = False
         message_list.append(messages[3225])
 
-    if read_process_status != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         retval = False
         message_list.append(messages[3226]  + f'{exit_code}s.')
 
@@ -763,7 +763,7 @@ def read(
         retval = False
         message_list.append(messages[3231])
 
-    if read_config != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         retval = False
         message_list.append(messages[3232] + f'{exit_code}s.')
 
@@ -780,7 +780,7 @@ def read(
         retval = False
         message_list.append(messages[3233])
 
-    if read_hosts != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         retval = False
         message_list.append(messages[3234] + f'{exit_code}s.')
 
@@ -797,7 +797,7 @@ def read(
         retval = False
         message_list.append(messages[3235])
 
-    if read_process_status != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         retval = False
         message_list.append(messages[3236]  + f'{exit_code}s.')
 
