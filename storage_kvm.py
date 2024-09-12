@@ -72,7 +72,8 @@ def build(
         return False, messages[3021]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3022]
+        return False, f'{messages[3022]} {exit_code}\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+
 
     return True, messages[1000]
 
@@ -131,7 +132,7 @@ def update(
         return False, messages[3021]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3022]
+        return False, f'{messages[3022]} {exit_code}\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     return True, messages[1000]
 
@@ -185,7 +186,7 @@ def scrub(
         return False, messages[3021]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3022]
+        return False, f'{messages[3022]} {exit_code}\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     return True, messages[1000]
 
@@ -239,6 +240,6 @@ def read(
         return False, messages[3021]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3022]
+        return False, f'{messages[3022]} {exit_code}\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     return True, messages[1000]
