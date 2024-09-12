@@ -63,7 +63,7 @@ def build(
 
     # Create storage using SSH communication
     try:
-        create_storage_kvm, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=host,
             payload=payload,
             username='robot',
@@ -71,7 +71,7 @@ def build(
     except CouldNotConnectException:
         return False, messages[3021]
 
-    if create_storage_kvm.exit_code != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         return False, messages[3022]
 
     return True, messages[1000]
@@ -122,7 +122,7 @@ def update(
 
     # Update storage using SSH communication
     try:
-        update_storage_kvm, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=host,
             payload=payload,
             username='robot',
@@ -130,7 +130,7 @@ def update(
     except CouldNotConnectException:
         return False, messages[3021]
 
-    if update_storage_kvm.exit_code != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         return False, messages[3022]
 
     return True, messages[1000]
@@ -176,7 +176,7 @@ def scrub(
 
     # Remove storage using SSH communication
     try:
-        remove_storage_kvm, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=host,
             payload=payload,
             username='robot',
@@ -184,7 +184,7 @@ def scrub(
     except CouldNotConnectException:
         return False, messages[3021]
 
-    if remove_storage_kvm.exit_code != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         return False, messages[3022]
 
     return True, messages[1000]
@@ -230,7 +230,7 @@ def read(
 
     # Read storage using SSH communication
     try:
-        read_storage_kvm, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=host,
             payload=payload,
             username='robot',
@@ -238,7 +238,7 @@ def read(
     except CouldNotConnectException:
         return False, messages[3021]
 
-    if read_storage_kvm.exit_code != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         return False, messages[3022]
 
     return True, messages[1000]
