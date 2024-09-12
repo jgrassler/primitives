@@ -118,7 +118,7 @@ def update(
     }
 
     # Define payload
-    payload = f'qemu-img resize -f qcow2 {domain_path}{storage} {size}G'
+    payload = f'qemu-img resize {domain_path}{storage} {size}G'
 
     # Update storage using SSH communication
     try:
