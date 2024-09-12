@@ -242,4 +242,4 @@ def read(
     if exit_code != SUCCESS_CODE:
         return False, f'{messages[3022]} {exit_code}\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
-    return True, messages[1000]
+    return True, f'{messages[1000]}.\n STDOUT from the Host {host} is {stdout}'
