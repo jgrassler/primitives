@@ -358,7 +358,7 @@ def scrub(
 
     dnsmasq_config_path = '/etc/netns/{namespace}/dnsmasq.conf'
     dnsmasq_hosts_path = '/etc/netns/{namespace}/dnsmasq-hosts.conf'
-    pidfile = '/run/dnsmasq-{namespace}s.pid'
+    pidfile = '/etc/netns/{namespace}/dnsmasq.pid'
 
     # Define message
     messages = {
