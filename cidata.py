@@ -507,7 +507,9 @@ def read(
                'Payload exited with status ',
     }
 
+    retval = True
     data_dict = None
+    message_list = ()
 
     # Default config_file if it is None
     if config_file is None:
@@ -515,19 +517,22 @@ def read(
 
     # Get load config from config_file
     if not Path(config_file).exists():
-        return False, data_dict, messages[3211]
+        retval = False
+        message_list.append(messages[3211])
     with Path(config_file).open('r') as file:
         config = json.load(file)
 
     # Get the ipv6_subnet from config_file
     ipv6_subnet = config.get('ipv6_subnet', None)
     if ipv6_subnet is None:
-        return False, data_dict, messages[3212]
+        retval = False
+        message_list.append(messages[3212])
     # Verify the ipv6_subnet value
     try:
         ipaddress.ip_network(ipv6_subnet)
     except ValueError:
-        return False, data_dict, messages[3213]
+        retval = False
+        message_list.append(messages[3213])
 
     # Get the PodNet Mgmt ips from ipv6_subnet
     podnet_a = f'{ipv6_subnet.split("/")[0]}10:0:2'
@@ -548,10 +553,12 @@ def read(
     # Get `podnet_a_enabled` and `podnet_b_enabled`
     podnet_a_enabled = config.get('podnet_a_enabled', None)
     if podnet_a_enabled is None:
-        return False, data_dict, messages[3214]
+        retval = False
+        message_list.append(messages[3214])
     podnet_b_enabled = config.get('podnet_b_enabled', None)
     if podnet_a_enabled is None:
-        return False, data_dict, messages[3215]
+        retval = False
+        message_list.append(messages[3215])
 
     # First run on enabled PodNet
     if podnet_a_enabled is True and podnet_b_enabled is False:
@@ -561,11 +568,14 @@ def read(
         enabled = podnet_b
         disabled = podnet_a
     elif podnet_a_enabled is True and podnet_b_enabled is True:
-        return False, data_dict, messages[3216]
+        retval = False
+        message_list.append(messages[3216])
     elif podnet_a_enabled is False and podnet_b_enabled is False:
-        return False, data_dict, messages[3217]
+        retval = False
+        message_list.append(messages[3217])
     else:
-        return False, data_dict, messages[3218]
+        retval = False
+        message_list.append(messages[3218])
 
     # define payloads
     read_userdata_payload = f'cat {domain_path}/userdata'
@@ -579,10 +589,12 @@ def read(
             username='robot',
         )
     except CouldNotConnectException:
-        return False, data_dict, messages[3221]
+        retval = False
+        message_list.append(messages[3221])
 
     if exit_code != SUCCESS_CODE:
-        return False, data_dict, messages[3222] + f'{exit_code}s.'
+        retval = False
+        message_list.append(messages[3222] + f'{exit_code}s.')
 
     data_dict[enabled]['metadata'] = stdout
 
@@ -594,10 +606,12 @@ def read(
             username='robot',
         )
     except CouldNotConnectException:
-        return False, data_dict, messages[3223]
+        retval = False
+        message_list.append(messages[3223])
 
     if exit_code != SUCCESS_CODE:
-        return False, data_dict, messages[3224]  + f'{exit_code}s.'
+        retval = False
+        message_list.append(messages[3224]  + f'{exit_code}s.')
 
     data_dict[enabled]['userdata'] = stdout
 
@@ -609,10 +623,12 @@ def read(
             username='robot',
         )
     except CouldNotConnectException:
-        return False, data_dict, messages[3231]
+        retval = False
+        message_list.append(messages[3231])
 
     if exit_code != SUCCESS_CODE:
-        return False, data_dict, messages[3232] + f'{exit_code}s.'
+        retval = False
+        message_list.append(messages[3232] + f'{exit_code}s.')
 
     data_dict[enabled]['metadata'] = stdout
 
@@ -624,11 +640,14 @@ def read(
             username='robot',
         )
     except CouldNotConnectException:
-        return False, data_dict, messages[3233]
+        retval = False
+        message_list.append(messages[3233])
 
     if exit_code != SUCCESS_CODE:
-        return False, data_dict, messages[3234]  + f'{exit_code}s.'
+        retval = False
+        message_list.append(messages[3234]  + f'{exit_code}s.')
 
     data_dict[enabled]['userdata'] = stdout
 
-    return True, data_dict, messages[1200]
+    message_list.append(messages[1200])
+    return retval, data_dict, message_list
