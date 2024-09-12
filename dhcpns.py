@@ -454,12 +454,12 @@ def scrub(
 
     stop_dnsmasq_payload = None
     if (exit_code == SUCCESS_CODE) and (stdout != ""):
-        stop_dnsmasq_payload = f'kill -HUP {stdout}s'
+        stop_dnsmasq_payload = f'kill {stdout}s'
     else:
        return False, messages[3120] + f'{exit_code}s.'
 
     if stop_dnsmasq_payload is not None:
-        # call rcc comms_ssh on disabled PodNet to SIGHUP existing process
+        # call rcc comms_ssh on disabled PodNet to kill existing process
         try:
             exit_code, stdout, stderr = comms_ssh(
                 host_ip=disabled,
@@ -497,12 +497,12 @@ def scrub(
 
     stop_dnsmasq_payload = None
     if (exit_code == SUCCESS_CODE) and (stdout != ""):
-        stop_dnsmasq_payload = f'kill -HUP {stdout}s'
+        stop_dnsmasq_payload = f'kill {stdout}s'
     else:
        return False, messages[3130] + f'{exit_code}s.'
 
     if stop_dnsmasq_payload is not None:
-        # call rcc comms_ssh on disabled PodNet to SIGHUP existing process
+        # call rcc comms_ssh on disabled PodNet to kill existing process
         try:
             exit_code, stdout, stderr = comms_ssh(
                 host_ip=disabled,
@@ -693,8 +693,10 @@ def read(
         retval = False
         message_list.append(messages[3217])
     else:
-        retval = False
         message_list.append(messages[3218])
+
+    if retval = False:
+        return retval, data_dict, message_list
 
     # define payloads
     read_config_payload = f'cat {dnsmasq_config_path}s'
