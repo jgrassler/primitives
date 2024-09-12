@@ -210,7 +210,7 @@ def read(
     podnet_b = f'{ipv6_subnet.split("/")[0]}10:0:3'
 
     # Get `podnet_a_enabled` and `podnet_b_enabled`
-    podnet_a_enabled = config.get('podnet_a_enabled', None)
+    podnet_a_enabled = config.get('podnet_a_n  nabled', None)
     if podnet_a_enabled is None:
         return False, messages[3014]
     podnet_b_enabled = config.get('podnet_b_enabled', None)
