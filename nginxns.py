@@ -170,7 +170,7 @@ def build(
     if (exit_code == SUCCESS_CODE) and (stdout != ""):
         reload_nginx_payload = f'kill -HUP {stdout}s'
     else:
-       return False, messages[3021] + f'{exit_code}s.'
+       return False, messages[3021] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh on enabled PodNet to create config
     try:
@@ -183,7 +183,7 @@ def build(
         return False, messages[3022]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3023] + f'{exit_code}s.'
+        return False, messages[3023] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     if reload_nginx_payload is not None:
         # call rcc comms_ssh on enabled PodNet to SIGHUP existing process
@@ -197,7 +197,7 @@ def build(
             return False, messages[3024]
 
         if exit_code != SUCCESS_CODE:
-            return False, messages[3025]  + f'{exit_code}s.'
+            return False, messages[3025]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
     else:
         # call rcc comms_ssh on enabled PodNet
         try:
@@ -210,7 +210,7 @@ def build(
             return False, messages[3026]
 
         if exit_code != SUCCESS_CODE:
-            return False, messages[3027]  + f'{exit_code}s.'
+            return False, messages[3027]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
 
     # call rcc comms_ssh on disabled PodNet to find existing process
@@ -227,7 +227,7 @@ def build(
     if (exit_code == SUCCESS_CODE) and (stdout != ""):
         reload_nginx_payload_enabled = f'kill -HUP {stdout}s'
     else:
-       return False, messages[3031] + f'{exit_code}s.'
+       return False, messages[3031] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh on disabled PodNet
     try:
@@ -240,7 +240,7 @@ def build(
         return False, messages[3032]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3033] + f'{exit_code}s.'
+        return False, messages[3033] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     if reload_nginx_payload_disabled is None:
         # call rcc comms_ssh on disabled PodNet to SIGHUP existing process
@@ -254,7 +254,7 @@ def build(
             return False, messages[3034]
 
         if exit_code != SUCCESS_CODE:
-            return False, messages[3035]  + f'{exit_code}s.'
+            return False, messages[3035]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
     else:
         # call rcc comms_ssh on disabled PodNet
         try:
@@ -267,7 +267,7 @@ def build(
             return False, messages[3036]
 
         if exit_code != SUCCESS_CODE:
-            return False, messages[3037]  + f'{exit_code}s.'
+            return False, messages[3037]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
 
     return True, messages[1000]
@@ -394,13 +394,13 @@ def scrub(
         return False, messages[3119]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3120] + f'{exit_code}s.'
+        return False, messages[3120] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     stop_nginx_payload = None
     if (exit_code == SUCCESS_CODE) and (stdout != ""):
         stop_nginx_payload = f'kill {stdout}s'
     else:
-        return False, messages[3121] + f'{exit_code}s.'
+        return False, messages[3121] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     if stop_nginx_payload is not None:
         # call rcc comms_ssh on enabled PodNet to kill existing process
@@ -413,7 +413,7 @@ def scrub(
         except CouldNotConnectException:
             return False, messages[3122]
         if exit_code != SUCCESS_CODE:
-            return False, messages[3123]  + f'{exit_code}s.'
+            return False, messages[3123]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh for nginx config file removal on enabled PodNet
     try:
@@ -426,7 +426,7 @@ def scrub(
         return False, messages[3124]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3125]  + f'{exit_code}s.'
+        return False, messages[3125]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh on disabled PodNet to find existing process
     try:
@@ -439,13 +439,13 @@ def scrub(
         return False, messages[3129]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3130] + f'{exit_code}s.'
+        return False, messages[3130] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     stop_nginx_payload = None
     if (exit_code == SUCCESS_CODE) and (stdout != ""):
         stop_nginx_payload = f'kill {stdout}s'
     else:
-        return False, messages[3131] + f'{exit_code}s.'
+        return False, messages[3131] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     if stop_nginx_payload is not None:
         # call rcc comms_ssh on disabled PodNet to kill existing process
@@ -458,7 +458,7 @@ def scrub(
         except CouldNotConnectException:
             return False, messages[3132]
         if exit_code != SUCCESS_CODE:
-            return False, messages[3133]  + f'{exit_code}s.'
+            return False, messages[3133]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh for nginx config file removal on disabled PodNet
     try:
@@ -471,7 +471,7 @@ def scrub(
         return False, messages[3134]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3135]  + f'{exit_code}s.'
+        return False, messages[3135]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     return True, messages[1100]
 
@@ -647,7 +647,7 @@ def read(
 
     if ( exit_code is not None ) and ( exit_code != SUCCESS_CODE ):
         retval = False
-        message_list.append(messages[3222] + f'{exit_code}s.')
+        message_list.append(messages[3222] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
 
     data_dict[enabled]['config_file'] = stdout
 
@@ -665,7 +665,7 @@ def read(
 
     if ( exit_code is not None ) and ( exit_code != SUCCESS_CODE ):
         retval = False
-        message_list.append(messages[3224]  + f'{exit_code}s.')
+        message_list.append(messages[3224]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
 
     data_dict[enabled]['process_status'] = stdout
 
@@ -683,7 +683,7 @@ def read(
 
     if ( exit_code is not None ) and ( exit_code != SUCCESS_CODE ):
         retval = False
-        message_list.append(messages[3232] + f'{exit_code}s.')
+        message_list.append(messages[3232] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
 
     data_dict[enabled]['config_file'] = stdout
 
@@ -701,7 +701,7 @@ def read(
 
     if ( exit_code is not None ) and ( exit_code != SUCCESS_CODE ):
         retval = False
-        message_list.append(messages[3234]  + f'{exit_code}s.')
+        message_list.append(messages[3234]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
 
     data_dict[enabled]['process_status'] = stdout
 
