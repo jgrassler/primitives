@@ -576,7 +576,7 @@ def read(
     else:
         message_list.append(messages[3218])
 
-    if retval = False
+    if retval == False:
         return retval, data_dict, message_list
 
     # define payloads
