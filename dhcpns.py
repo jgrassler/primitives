@@ -1,5 +1,5 @@
 """
-Primitive to Build, Read and Scrub nginx for cloud-init userdata/metadata delivery on PodNet HA
+Primitive to Build, Read and Scrub dnsmasq for VRF name space DHCP on PodNet HA
 """
 # 3rd party modules
 import jinja2
@@ -56,8 +56,8 @@ def build(
     """
 
     dnsmasq_config_path = '/etc/netns/{namespace}/dnsmasq.conf'
-    dnsmasq_hosts_path = '/etc/netns/{namespace}/dnsmasq-hosts.conf'
-    pidfile= '/run/dnsmasq-{namespace}s.pid'
+    dnsmasq_hosts_path = '/etc/netns/{namespace}/dnsmasq.hosts'
+    pidfile= '/etc/netns/{namespace}s/dnsmasq.pid'
 
     # Define message
     messages = {
@@ -349,7 +349,7 @@ def scrub(
 
     dnsmasq_config_path = '/etc/netns/{namespace}/dnsmasq.conf'
     dnsmasq_hosts_path = '/etc/netns/{namespace}/dnsmasq-hosts.conf'
-    pidfile= '/run/dnsmasq-{namespace}s.pid'
+    pidfile = '/run/dnsmasq-{namespace}s.pid'
 
     # Define message
     messages = {
@@ -520,9 +520,14 @@ def read(
                   process_status:
                   type: string
                     description: |
-                      The contents of the `userdata` file at domain_path. May be
-                      None upon any read errors.
+                      The contents of the dnsmasq.hosts file for this namespace.
+                      May be None upon any read errors.
                     type: string
+                  config_file:
+                    type: string
+                    description: |
+                      The contents of the `metadata` file at domain_path. May be
+                      None upon any read errors.
                   config_file:
                     type: string
                     description: |
@@ -536,8 +541,8 @@ def read(
     """
 
     dnsmasq_config_path = '/etc/netns/{namespace}/dnsmasq.conf'
-    dnsmasq_hosts_path = '/etc/netns/{namespace}/dnsmasq-hosts.conf'
-    pidfile= '/run/nginx-{namespace}s.pid'
+    dnsmasq_hosts_path = '/etc/netns/{namespace}/dnsmasq.hosts'
+    pidfile= '/etc/netns/{namespace}s/dnsmasq.pid'
 
     # Define message
     messages = {
@@ -553,16 +558,22 @@ def read(
         3218: f'3218: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
         3221: f'3221: Failed to connect to the enabled PodNet from the config file {config_file} for read_config_payload',
         3222: f'3222: Failed to read config file {dnsmasq_config_path}s on the enabled PodNet. Payload exited with status ',
-        3223: f'3223: Failed to connect to the enabled PodNet from the config file {config_file} for find_process_payload',
-        3223: f'3224: Failed to execute find_process_payload on the enabled PodNet node. Payload exited with status ',
-        3231: f'3231: Successfully retrieved dnsmasq process status and {dnsmasq_config_path}s from enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file} for read_config_payload',
-        3232: f'3232: Successfully retrieved dnsmasq process status and {dnsmasq_config_path}s from enabled PodNet but failed to execute read_config_payload '
-               'on the disabled PodNet. Payload exited with status ',
-        3233: f'3233: Successfully retrieved {dnsmasq_config_file}s from both PodNet nodes but failed to connect to the disabled PodNet '
-              f'from the config file {config_file} for find_process_payload.',
-        3234: f'3234: Successfully retrieved {dnsmasq_config_file}s from both PodNet nodes but failed to execute find_process_payload on the disabled PodNet. '
-               'Payload exited with status ',
+        3223: f'3223: Failed to connect to the enabled PodNet from the config file {config_file} for read_hosts_payload',
+        3224: f'3224: Failed to read hosts file {dnsmasq_hosts_path}s on the enabled PodNet. Payload exited with status ',
+        3225: f'3225: Failed to connect to the enabled PodNet from the config file {config_file} for find_process_payload',
+        3226: f'3226: Failed to execute find_process_payload on the enabled PodNet node. Payload exited with status ',
+        3231: f'3231: Successfully retrieved dnsmasq process status and {dnsmasq_config_path}s, {dnsmasq_hosts_path}s from enabled PodNet '
+              f'but failed to connect to the disabled PodNet from the config file {config_file} for read_config_payload',
+        3232: f'3232: Successfully retrieved dnsmasq process status and {dnsmasq_config_path}s, {dnsmasq_hosts_path}s from enabled PodNet '
+              f'but failed to execute read_config_payload on the disabled PodNet. Payload exited with status ',
+        3233: f'3233: Successfully retrieved dnsmasq process status and {dnsmasq_config_path}s, {dnsmasq_hosts_path}s from enabled PodNet '
+              f'but failed to connect to the disabled PodNet from the config file {config_file} for read_hosts_payload',
+        3234: f'3234: Successfully retrieved dnsmasq process status and {dnsmasq_config_path}s, {dnsmasq_hosts_path}s from enabled PodNet '
+              f'but failed to execute read_hosts_payload on the disabled PodNet. Payload exited with status ',
+        3235: f'3235: Successfully retrieved dnsmasq process status and {dnsmasq_config_path}s, {dnsmasq_hosts_path}s from both PodNet '
+              f'nodes but failed to connect to the disabled PodNet from the config file {config_file} for find_process_payload.',
+        3236: f'3236: Successfully retrieved dnsmasq process status and {dnsmasq_config_file}s, {dnsmasq_hosts_path}s from both PodNet '
+              f'nodes but failed to execute find_process_payload on the disabled PodNet. Payload exited with status ',
     }
 
     retval = True
@@ -601,11 +612,13 @@ def read(
     data_dict[podnet_a] = {
         'process_status': None,
         'config_file': None,
+        'hosts_file': None,
     }
 
     data_dict[podnet_b] = {
         'process_status': None,
         'config_file': None,
+        'hosts_file': None,
     }
 
     # Get `podnet_a_enabled` and `podnet_b_enabled`
@@ -636,8 +649,8 @@ def read(
         message_list.append(messages[3218])
 
     # define payloads
-    read_config_payload = f'cat {dnsmasq_config_path}'
-    read_hosts_payload = f'cat {dnsmasq_hosts_path}'
+    read_config_payload = f'cat {dnsmasq_config_path}s'
+    read_hosts_payload = f'cat {dnsmasq_hosts_path}s'
     find_process_payload = f'ps auxw | grep dnsmasq | grep {dnsmasq_config_path}s'
 
     # call rcc comms_ssh for config retrieval from enabled PodNet
@@ -657,6 +670,23 @@ def read(
 
     data_dict[enabled]['config_file'] = stdout
 
+    # call rcc comms_ssh for hosts retrieval from enabled PodNet
+    try:
+        read_hosts, stdout, stderr = comms_ssh(
+            host_ip=enabled,
+            payload=read_hosts_payload,
+            username='robot',
+        )
+    except CouldNotConnectException:
+        retval = False
+        message_list.append(messages[3223])
+
+    if read_hosts.exit_code != SUCCESS_CODE:
+        retval = False
+        message_list.append(messages[3224] + f'{read_hosts.exit_code}s.')
+
+    data_dict[enabled]['hosts_file'] = stdout
+
     # call rcc comms_ssh for process_status retrieval from enabled PodNet
     try:
         read_process_status, stdout, stderr = comms_ssh(
@@ -666,11 +696,11 @@ def read(
         )
     except CouldNotConnectException:
         retval = False
-        message_list.append(messages[3223])
+        message_list.append(messages[3225])
 
     if read_process_status.exit_code != SUCCESS_CODE:
         retval = False
-        message_list.append(messages[3224]  + f'{read_process_status.exit_code}s.')
+        message_list.append(messages[3226]  + f'{read_process_status.exit_code}s.')
 
     data_dict[enabled]['process_status'] = stdout
 
@@ -691,6 +721,23 @@ def read(
 
     data_dict[enabled]['config_file'] = stdout
 
+    # call rcc comms_ssh for hosts retrieval from disabled PodNet
+    try:
+        read_hosts, stdout, stderr = comms_ssh(
+            host_ip=disabled,
+            payload=read_hosts_payload,
+            username='robot',
+        )
+    except CouldNotConnectException:
+        retval = False
+        message_list.append(messages[3233])
+
+    if read_hosts.exit_code != SUCCESS_CODE:
+        retval = False
+        message_list.append(messages[3234] + f'{read_hosts.exit_code}s.')
+
+    data_dict[disabled]['hosts_file'] = stdout
+
     # call rcc comms_ssh for process_status retrieval from disabled PodNet
     try:
         read_process_status, stdout, stderr = comms_ssh(
@@ -700,11 +747,11 @@ def read(
         )
     except CouldNotConnectException:
         retval = False
-        message_list.append(messages[3233])
+        message_list.append(messages[3235])
 
     if read_process_status.exit_code != SUCCESS_CODE:
         retval = False
-        message_list.append(messages[3234]  + f'{read_process_status.exit_code}s.')
+        message_list.append(messages[3236]  + f'{read_process_status.exit_code}s.')
 
     data_dict[enabled]['process_status'] = stdout
 
