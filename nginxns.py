@@ -594,10 +594,11 @@ def read(
             username='robot',
         )
     except CouldNotConnectException:
+        exit_code = None
         retval = False
         message_list.append(messages[3221])
 
-    if exit_code != SUCCESS_CODE:
+    if ( exit_code is not None ) and ( exit_code != SUCCESS_CODE ):
         retval = False
         message_list.append(messages[3222] + f'{exit_code}s.')
 
@@ -611,10 +612,11 @@ def read(
             username='robot',
         )
     except CouldNotConnectException:
+        exit_code = None
         retval = False
         message_list.append(messages[3223])
 
-    if exit_code != SUCCESS_CODE:
+    if ( exit_code is not None ) and ( exit_code != SUCCESS_CODE ):
         retval = False
         message_list.append(messages[3224]  + f'{exit_code}s.')
 
@@ -628,10 +630,11 @@ def read(
             username='robot',
         )
     except CouldNotConnectException:
+        exit_code = None
         retval = False
         message_list.append(messages[3231])
 
-    if exit_code != SUCCESS_CODE:
+    if ( exit_code is not None ) and ( exit_code != SUCCESS_CODE ):
         retval = False
         message_list.append(messages[3232] + f'{exit_code}s.')
 
@@ -645,10 +648,11 @@ def read(
             username='robot',
         )
     except CouldNotConnectException:
+        exit_code = None
         retval = False
         message_list.append(messages[3233])
 
-    if exit_code != SUCCESS_CODE:
+    if ( exit_code is not None ) and ( exit_code != SUCCESS_CODE ):
         retval = False
         message_list.append(messages[3234]  + f'{exit_code}s.')
 
