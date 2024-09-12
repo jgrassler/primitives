@@ -209,13 +209,13 @@ def build(
 
     # define payloads
     create_userdata_payload = "\n".join([
-        f'tee {domain_path} userdata <<EOF',
+        f'tee {domain_path}/userdata <<EOF',
         userdata,
         "EOF"
         ])
 
     create_metadata_payload = "\n".join([
-        f'tee {domain_path} metadata <<EOF',
+        f'tee {domain_path}/metadata <<EOF',
         metadata_json,
         "EOF"
         ])
