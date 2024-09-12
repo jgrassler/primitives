@@ -579,8 +579,7 @@ def read(
         retval = False
         message_list.append(messages[3217])
     else:
-        retval = False
-        message_list.append(messages[3218])
+        return retval, data_dict, message_list
 
     # define payloads
     read_config_payload = f'cat {nginx_config_path}'
