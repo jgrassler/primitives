@@ -72,26 +72,35 @@ def build(
         3017: f'3017: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
         3018: f'3018: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
         3019: f'3019: Failed to render jinja2 template for {dnsmasq_conf_path}',
-        3020: f'3020: Failed to connect to the enabled PodNet from the config file {config_file} for find_process_payload',
-        3021: f'3021: Failed to run find_process_payload on the enabled PodNet. Payload exited with status ',
-        3022: f'3022: Failed to connect to the enabled PodNet from the config file {config_file} for create_config_payload',
-        3023: f'3023: Failed to create config file {dnsmasq_config_path} on the enabled PodNet. Payload exited with status ',
-        3024: f'3024: Failed to connect to the enabled PodNet from the config file {config_file} for reload_dnsmasq_payload',
-        3025: f'3025: Failed to run reload_dnsmasq_payload on the enabled PodNet. Payload exited with status ',
-        3026: f'3026: Failed to connect to the enabled PodNet from the config file {config_file} for start_dnsmasq_payload',
-        3027: f'3027: Failed to start dnsmasq on the enabled PodNet. Payload exited with status ',
-        3030: f'3030: Failed to connect to the enabled PodNet from the config file {config_file} for find_process_payload',
-        3031: f'3031: Failed to run find_process_payload on the disabled PodNet. Payload exited with status ',
-        3032: f'3032: Successfully created {dnsmasq_config_path} and started dnsmasq on enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file} for create_config_payload.',
-        3033: f'3033: Successfully created {dnsmasq_config_path} and started dnsmasq on enabled PodNet but failed to create {dnsmasq_config_path} on the disabled PodNet. '
-               'Payload exited with status ',
-        3034: f'3034: Failed to connect to the disabled PodNet from the config file {config_file} for reload_dnsmasq_payload',
-        3035: f'3035: Failed to run reload_dnsmasq_payload on the disabled PodNet. Payload exited with status ',
-        3036: f'3036: Successfully created {dnsmasq_config_path} on both PodNet nodes and started dnsmasq on enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file} for start_dnsmasq_payload.',
-        3037: f'3037: Successfully created {dnsmasq_config_path} on both PodNet nodes and started dnsmasq on enabled PodNet but failed to start dnsmasq on the disabled PodNet. '
-               'Payload exited with status ',
+        3020: f'3020: Failed to render jinja2 template for {dnsmasq_hosts_path}',
+        3021: f'3021: Failed to connect to the enabled PodNet from the config file {config_file} for find_process_payload',
+        3022: f'3022: Failed to run find_process_payload on the enabled PodNet. Payload exited with status ',
+        3023: f'3023: Failed to connect to the enabled PodNet from the config file {config_file} for create_config_payload',
+        3024: f'3024: Failed to create config file {dnsmasq_config_path} on the enabled PodNet. Payload exited with status ',
+        3025: f'3025: Failed to connect to the enabled PodNet from the config file {config_file} for create_hosts_payload',
+        3026: f'3026: Failed to create config file {dnsmasq_hosts_path} on the enabled PodNet. Payload exited with status ',
+        3027: f'3027: Failed to connect to the enabled PodNet from the config file {config_file} for reload_dnsmasq_payload',
+        3028: f'3028: Failed to run reload_dnsmasq_payload on the enabled PodNet. Payload exited with status ',
+        3029: f'3029: Failed to connect to the enabled PodNet from the config file {config_file} for start_dnsmasq_payload',
+        3030: f'3030: Failed to start dnsmasq on the enabled PodNet. Payload exited with status ',
+        3041: f'3041: Failed to connect to the enabled PodNet from the config file {config_file} for find_process_payload',
+        3042: f'3042: Failed to run find_process_payload on the disabled PodNet. Payload exited with status ',
+        3043: f'3043: Successfully created {dnsmasq_config_path}, {dnsmasq_hosts_path} and started dnsmasq on enabled PodNet '
+              f'but failed to connect to the disabled PodNet from the config file {config_file} for create_config_payload.',
+        3044: f'3044: Successfully created {dnsmasq_config_path}, {dnsmasq_hosts_path} and started dnsmasq on enabled PodNet '
+              f'but failed to create {dnsmasq_config_path} on the disabled PodNet. Payload exited with status ',
+        3045: f'3045: Successfully created {dnsmasq_config_path} on both PodNets, {dnsmasq_hosts_path} on enabled PodNet '
+              f'and started dnsmasq on enabled PodNet but failed to connect to the disabled PodNet from the config file {config_file} '
+              f' for create_hosts_payload.',
+        3046: f'3046: Successfully created {dnsmasq_config_path} on both PodNets, {dnsmasq_hosts_path} on enabled PodNet '
+              f'and started dnsmasq on enabled PodNet but failed to create {dnsmasq_hosts_path}s on disabled PodNet from '
+              f'the config file {config_file}. Payload exited with status ',
+        3047: f'3047: Failed to connect to the disabled PodNet from the config file {config_file} for reload_dnsmasq_payload',
+        3048: f'3048: Failed to run reload_dnsmasq_payload on the disabled PodNet. Payload exited with status ',
+        3049: f'3049: Successfully created {dnsmasq_config_path} on both PodNet nodes and started dnsmasq on enabled PodNet but failed to connect '
+              f'to the disabled PodNet from the config file {config_file} for start_dnsmasq_payload.',
+        3050: f'3050: Successfully created {dnsmasq_config_path}s, {dnsmasq_hosts_path}s on both PodNet nodes and started dnsmasq on enabled PodNet '
+              f'but failed to start dnsmasq on the disabled PodNet. ',
     }
 
     # Default config_file if it is None
@@ -227,7 +236,7 @@ def build(
     if reload_dnsmasq_payload is not None:
         # call rcc comms_ssh on enabled PodNet to SIGHUP existing process
         try:
-            start_dnsmasq, stdout, stderr = comms_ssh(
+            reload_dnsmasq, stdout, stderr = comms_ssh(
                 host_ip=enabled,
                 payload=reload_dnsmasq_payload,
                 username='robot',
@@ -235,8 +244,8 @@ def build(
         except CouldNotConnectException:
             return False, messages[3027]
 
-        if start_dnsmasq.exit_code != SUCCESS_CODE:
-            return False, messages[3028]  + f'{start_dnsmasq.exit_code}s.'
+        if reload_dnsmasq.exit_code != SUCCESS_CODE:
+            return False, messages[3028]  + f'{reload_dnsmasq.exit_code}s.'
     else:
         # call rcc comms_ssh on enabled PodNet
         try:
@@ -296,7 +305,7 @@ def build(
     if reload_dnsmasq_payload is not None:
         # call rcc comms_ssh on disabled PodNet to SIGHUP existing process
         try:
-            start_dnsmasq, stdout, stderr = comms_ssh(
+            reload_dnsmasq, stdout, stderr = comms_ssh(
                 host_ip=disabled,
                 payload=reload_dnsmasq_payload,
                 username='robot',
@@ -304,8 +313,8 @@ def build(
         except CouldNotConnectException:
             return False, messages[3047]
 
-        if start_dnsmasq.exit_code != SUCCESS_CODE:
-            return False, messages[3048]  + f'{start_dnsmasq.exit_code}s.'
+        if reload_dnsmasq.exit_code != SUCCESS_CODE:
+            return False, messages[3048]  + f'{reload_dnsmasq.exit_code}s.'
     else:
         # call rcc comms_ssh on disabled PodNet
         try:
