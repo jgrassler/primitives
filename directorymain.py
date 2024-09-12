@@ -115,7 +115,7 @@ def build(
 
     # call rcc comms_ssh on enabled PodNet
     try:
-        create_dir, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=enabled,
             payload=payload,
             username='robot',
@@ -123,12 +123,12 @@ def build(
     except CouldNotConnectException:
         return False, messages[3021]
 
-    if create_dir.exit_code != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         return False, messages[3022]
 
     # call rcc comms_ssh on disabled PodNet
     try:
-        create_dir, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=disabled,
             payload=payload,
             username='robot',
@@ -136,7 +136,7 @@ def build(
     except CouldNotConnectException:
         return False, messages[3031]
 
-    if create_dir.exit_code != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         return False, messages[3032]
 
     return True, messages[1000]
@@ -236,7 +236,7 @@ def read(
 
     # call rcc comms_ssh on enabled PodNet
     try:
-        read_dir, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=enabled,
             payload=payload,
             username='robot',
@@ -244,12 +244,12 @@ def read(
     except CouldNotConnectException:
         return False, messages[3021]
 
-    if read_dir.exit_code != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         return False, messages[3022]
 
     # call rcc comms_ssh on disabled PodNet
     try:
-        read_dir, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=disabled,
             payload=payload,
             username='robot',
@@ -257,7 +257,7 @@ def read(
     except CouldNotConnectException:
         return False, messages[3031]
 
-    if read_dir.exit_code != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         return False, messages[3032]
 
     return True, messages[1000]
@@ -357,7 +357,7 @@ def scrub(
 
     # call rcc comms_ssh on enabled PodNet
     try:
-        remove_dir, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=enabled,
             payload=payload,
             username='robot',
@@ -365,12 +365,12 @@ def scrub(
     except CouldNotConnectException:
         return False, messages[3021]
 
-    if remove_dir.exit_code != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         return False, messages[3022]
 
     # call rcc comms_ssh on disabled PodNet
     try:
-        remove_dir, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=disabled,
             payload=payload,
             username='robot',
@@ -378,7 +378,7 @@ def scrub(
     except CouldNotConnectException:
         return False, messages[3031]
 
-    if remove_dir.exit_code != SUCCESS_CODE:
+    if exit_code != SUCCESS_CODE:
         return False, messages[3032]
 
     return True, messages[1000]
