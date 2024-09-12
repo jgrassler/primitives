@@ -574,8 +574,7 @@ def read(
         retval = False
         message_list.append(messages[3217])
     else:
-        retval = False
-        message_list.append(messages[3218])
+        return retval, data_dict, message_list
 
     # define payloads
     read_userdata_payload = f'cat {domain_path}/userdata'
@@ -591,8 +590,9 @@ def read(
     except CouldNotConnectException:
         retval = False
         message_list.append(messages[3221])
+        exit_code = None    # Make sure this is defined
 
-    if exit_code != SUCCESS_CODE:
+    if (exit_code != SUCCESS_CODE) and (exit_code is not None):
         retval = False
         message_list.append(messages[3222] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
 
@@ -608,8 +608,9 @@ def read(
     except CouldNotConnectException:
         retval = False
         message_list.append(messages[3223])
+        exit_code = None    # Make sure this is defined
 
-    if exit_code != SUCCESS_CODE:
+    if (exit_code != SUCCESS_CODE) and (exit_code is not None):
         retval = False
         message_list.append(messages[3224]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
 
@@ -625,8 +626,9 @@ def read(
     except CouldNotConnectException:
         retval = False
         message_list.append(messages[3231])
+        exit_code = None    # Make sure this is defined
 
-    if exit_code != SUCCESS_CODE:
+    if (exit_code != SUCCESS_CODE) and (exit_code is not None):
         retval = False
         message_list.append(messages[3232] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
 
@@ -642,8 +644,9 @@ def read(
     except CouldNotConnectException:
         retval = False
         message_list.append(messages[3233])
+        exit_code = None    # Make sure this is defined
 
-    if exit_code != SUCCESS_CODE:
+    if (exit_code != SUCCESS_CODE) and (exit_code is not None):
         retval = False
         message_list.append(messages[3234]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
 
