@@ -35,7 +35,7 @@ def build(
             type: string
             required: true
         config_file:
-            description: The path to the config.json file
+            description: The path to the config.json file. This will default to /opt/robot/config.json if not supplied.
             type: string
             required: false
     return:
@@ -66,7 +66,7 @@ def build(
 
     # Default config_file if it is None
     if config_file is None:
-        config_file = '/etc/cloudcix/pod/configs/config.json'
+        config_file = '/opt/robot/config.json'
 
     # Get load config from config_file
     if not Path(config_file).exists():
@@ -187,7 +187,7 @@ def read(
 
     # Default config_file if it is None
     if config_file is None:
-        config_file = '/etc/cloudcix/pod/configs/config.json'
+        config_file = '/opt/robot/config.json'
 
     # Get load config from config_file
     if not Path(config_file).exists():
@@ -308,7 +308,7 @@ def scrub(
 
     # Default config_file if it is None
     if config_file is None:
-        config_file = '/etc/cloudcix/pod/configs/config.json'
+        config_file = '/opt/robot/config.json'
 
     # Get load config from config_file
     if not Path(config_file).exists():
