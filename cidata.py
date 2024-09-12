@@ -222,7 +222,7 @@ def build(
 
     # call rcc comms_ssh on enabled PodNet
     try:
-        create_metadata, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=enabled,
             payload=create_metadata_payload,
             username='robot',
@@ -230,12 +230,12 @@ def build(
     except CouldNotConnectException:
         return False, messages[3021]
 
-    if create_metadata.exit_code != SUCCESS_CODE:
-        return False, messages[3022] + f'{create_metadata.exit_code}s.'
+    if exit_code != SUCCESS_CODE:
+        return False, messages[3022] + f'{exit_code}s.'
 
     # call rcc comms_ssh on enabled PodNet
     try:
-        create_userdata, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=enabled,
             payload=create_userdata_payload,
             username='robot',
@@ -243,12 +243,12 @@ def build(
     except CouldNotConnectException:
         return False, messages[3023]
 
-    if create_userdata.exit_code != SUCCESS_CODE:
-        return False, messages[3024]  + f'{create_userdata.exit_code}s.'
+    if exit_code != SUCCESS_CODE:
+        return False, messages[3024]  + f'{exit_code}s.'
 
     # call rcc comms_ssh on disabled PodNet
     try:
-        create_metadata, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=disabled,
             payload=create_metadata_payload,
             username='robot',
@@ -256,12 +256,12 @@ def build(
     except CouldNotConnectException:
         return False, messages[3031]
 
-    if create_metadata.exit_code != SUCCESS_CODE:
-        return False, messages[3032] + f'{create_metadata.exit_code}s.'
+    if exit_code != SUCCESS_CODE:
+        return False, messages[3032] + f'{exit_code}s.'
 
     # call rcc comms_ssh on disabled PodNet
     try:
-        create_userdata, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=disabled,
             payload=create_userdata_payload,
             username='robot',
@@ -269,8 +269,8 @@ def build(
     except CouldNotConnectException:
         return False, messages[3033]
 
-    if create_userdata.exit_code != SUCCESS_CODE:
-        return False, messages[3034]  + f'{create_userdata.exit_code}s.'
+    if exit_code != SUCCESS_CODE:
+        return False, messages[3034]  + f'{exit_code}s.'
 
 
     return True, messages[1000]
@@ -378,7 +378,7 @@ def scrub(
 
     # call rcc comms_ssh for metadata removal on enabled PodNet
     try:
-        remove_metadata, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=enabled,
             payload=remove_metadata_payload,
             username='robot',
@@ -386,12 +386,12 @@ def scrub(
     except CouldNotConnectException:
         return False, messages[3121]
 
-    if remove_metadata.exit_code != SUCCESS_CODE:
-        return False, messages[3122] + f'{remove_metadata.exit_code}s.'
+    if exit_code != SUCCESS_CODE:
+        return False, messages[3122] + f'{exit_code}s.'
 
     # call rcc comms_ssh for userdata removal on enabled PodNet
     try:
-        remove_userdata, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=enabled,
             payload=remove_userdata_payload,
             username='robot',
@@ -399,12 +399,12 @@ def scrub(
     except CouldNotConnectException:
         return False, messages[3123]
 
-    if remove_userdata.exit_code != SUCCESS_CODE:
-        return False, messages[3124]  + f'{remove_userdata.exit_code}s.'
+    if exit_code != SUCCESS_CODE:
+        return False, messages[3124]  + f'{exit_code}s.'
 
     # call rcc comms_ssh for metadata removal on disabled PodNet
     try:
-        remove_metadata, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=disabled,
             payload=remove_metadata_payload,
             username='robot',
@@ -412,12 +412,12 @@ def scrub(
     except CouldNotConnectException:
         return False, messages[3131]
 
-    if remove_metadata.exit_code != SUCCESS_CODE:
-        return False, messages[3132] + f'{remove_metadata.exit_code}s.'
+    if exit_code != SUCCESS_CODE:
+        return False, messages[3132] + f'{exit_code}s.'
 
     # call rcc comms_ssh for userdata removal on disabled PodNet
     try:
-        remove_userdata, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=disabled,
             payload=remove_userdata_payload,
             username='robot',
@@ -425,8 +425,8 @@ def scrub(
     except CouldNotConnectException:
         return False, messages[3133]
 
-    if remove_userdata.exit_code != SUCCESS_CODE:
-        return False, messages[3134]  + f'{remove_userdata.exit_code}s.'
+    if exit_code != SUCCESS_CODE:
+        return False, messages[3134]  + f'{exit_code}s.'
 
 
     return True, messages[1100]
@@ -573,7 +573,7 @@ def read(
 
     # call rcc comms_ssh for metadata retrieval from enabled PodNet
     try:
-        read_metadata, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=enabled,
             payload=read_metadata_payload,
             username='robot',
@@ -581,14 +581,14 @@ def read(
     except CouldNotConnectException:
         return False, data_dict, messages[3221]
 
-    if read_metadata.exit_code != SUCCESS_CODE:
-        return False, data_dict, messages[3222] + f'{read_metadata.exit_code}s.'
+    if exit_code != SUCCESS_CODE:
+        return False, data_dict, messages[3222] + f'{exit_code}s.'
 
     data_dict[enabled]['metadata'] = stdout
 
     # call rcc comms_ssh for userdata retrieval from enabled PodNet
     try:
-        read_userdata, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=enabled,
             payload=read_userdata_payload,
             username='robot',
@@ -596,14 +596,14 @@ def read(
     except CouldNotConnectException:
         return False, data_dict, messages[3223]
 
-    if read_userdata.exit_code != SUCCESS_CODE:
-        return False, data_dict, messages[3224]  + f'{read_userdata.exit_code}s.'
+    if exit_code != SUCCESS_CODE:
+        return False, data_dict, messages[3224]  + f'{exit_code}s.'
 
     data_dict[enabled]['userdata'] = stdout
 
     # call rcc comms_ssh for metadata retrieval from disabled PodNet
     try:
-        read_metadata, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=disabled,
             payload=read_metadata_payload,
             username='robot',
@@ -611,14 +611,14 @@ def read(
     except CouldNotConnectException:
         return False, data_dict, messages[3231]
 
-    if read_metadata.exit_code != SUCCESS_CODE:
-        return False, data_dict, messages[3232] + f'{read_metadata.exit_code}s.'
+    if exit_code != SUCCESS_CODE:
+        return False, data_dict, messages[3232] + f'{exit_code}s.'
 
     data_dict[enabled]['metadata'] = stdout
 
     # call rcc comms_ssh for userdata retrieval from disabled PodNet
     try:
-        read_userdata, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=disabled,
             payload=read_userdata_payload,
             username='robot',
@@ -626,8 +626,8 @@ def read(
     except CouldNotConnectException:
         return False, data_dict, messages[3233]
 
-    if read_userdata.exit_code != SUCCESS_CODE:
-        return False, data_dict, messages[3234]  + f'{read_userdata.exit_code}s.'
+    if exit_code != SUCCESS_CODE:
+        return False, data_dict, messages[3234]  + f'{exit_code}s.'
 
     data_dict[enabled]['userdata'] = stdout
 
