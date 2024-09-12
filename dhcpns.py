@@ -372,18 +372,24 @@ def scrub(
         3116: f'3116: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are True',
         3117: f'3117: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
         3118: f'3118: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
-        3121: f'3123: Failed to connect to the enabled PodNet from the config file {config_file} for start_dnsmasq_payload',
+        3119: f'3119: Failed to connect to the enabled PodNet from the config file {config_file} for find_proces_payload',
+        3120: f'3120: Failed to find process on the enabled PodNet. Payload exited with status ',
+        3121: f'3123: Failed to connect to the enabled PodNet from the config file {config_file} for stop_dnsmasq_payload',
         3122: f'3124: Failed to stop dnsmasq on the enabled PodNet. Payload exited with status ',
         3123: f'3121: Failed to connect to the enabled PodNet from the config file {config_file} for remove_config_payload',
         3124: f'3122: Failed to delete config files {dnsmasq_config_path}s, {dnsmasq_hosts_path}s on the enabled PodNet. Payload exited with status ',
-        3131: f'3131: Successfully stopped dnsmasq and deleted {dnsmasq_config_path}, {dnsmasq_hosts_path} on enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file} for stop_dnsmasq_payload.',
-        3132: f'3132: Successfully stopped dnsmasq and deleted {dnsmasq_config_path}, {dnsmasq_hosts_path}s on enabled PodNet but failed to stop dnsmasq on the disabled PodNet. '
-               'Payload exited with status ',
-        3133: f'3133: Successfully stoppend dnsmasq and deleted {dnsmasq_config_path}, {dnsmasq_hosts_path}s on enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file} for remove_config_payload.',
-        3134: f'3134: Successfully stopped dnsmasq on both PodNet nodes and deleted {dnsmasq_config_path}s, {dnsmasq_hosts_path} on enabled PodNet but failed to stop dnsmasq on the disabled PodNet. '
-               'Payload exited with status ',
+        3129: f'3129: Failed to run find_process_payload on the disabled PodNet. Payload exited with status ',
+        3130: f'3130: Successfully created {dnsmasq_config_path}, {dnsmasq_hosts_path} and started dnsmasq on enabled PodNet '
+              f'but failed to connect to the disabled PodNet from the config file {config_file} for create_config_payload.',
+        3131: f'3131: Successfully stopped dnsmasq and deleted {dnsmasq_config_path}, {dnsmasq_hosts_path} on enabled PodNet '
+              f'but failed to connect to the disabled PodNet from the config file {config_file} for stop_dnsmasq_payload.',
+        3132: f'3132: Successfully stopped dnsmasq and deleted {dnsmasq_config_path}, {dnsmasq_hosts_path}s on enabled PodNet '
+              f'but failed to stop dnsmasq on the disabled PodNet. Payload exited with status ',
+        3133: f'3133: Successfully stoppend dnsmasq and deleted {dnsmasq_config_path}, {dnsmasq_hosts_path}s on enabled PodNet '
+              f'but failed to connect to the disabled PodNet from the config file {config_file} for remove_config_payload.',
+        3134: f'3134: Successfully stopped dnsmasq on both PodNet nodes and deleted {dnsmasq_config_path}s, {dnsmasq_hosts_path} '
+              f'on enabled PodNet but failed to delete {dnsmasq_config_path}s, {dnsmasq_hosts_path} on the disabled PodNet. Payload '
+              f'exited with status ',
     }
 
     # Default config_file if it is None
@@ -433,27 +439,44 @@ def scrub(
         return False, messages[3118]
 
     # define payloads
-    stop_dnsmasq_payload = f'kill $(cat {pidfile}s)'
+    find_process_payload = "ps auxw | grep dnsmasq | grep {dnsmasq_config_path}s | awk '{print $2}'"
     delete_config_payload = f'rm -f {dnsmasq_config_path}s {dnsmasq_hosts_path}s'
 
-    # call rcc comms_ssh for stopping dnsmasq on enabled PodNet
+    # call rcc comms_ssh on enabled PodNet to find existing process
     try:
         exit_code, stdout, stderr = comms_ssh(
             host_ip=enabled,
-            payload=stop_dnsmasq_payload,
+            payload=find_process_payload,
             username='robot',
         )
     except CouldNotConnectException:
-        return False, messages[3121]
+        return False, messages[3119]
 
-    if stop_dnsmasq != SUCCESS_CODE:
-        return False, messages[3122] + f'{exit_code}s.'
+    stop_dnsmasq_payload = None
+    if (exit_code == SUCCESS_CODE) and (stdout != ""):
+        stop_dnsmasq_payload = f'kill -HUP {stdout}s'
+    else:
+       return False, messages[3120] + f'{exit_code}s.'
+
+    if stop_dnsmasq_payload is not None:
+        # call rcc comms_ssh on disabled PodNet to SIGHUP existing process
+        try:
+            exit_code, stdout, stderr = comms_ssh(
+                host_ip=disabled,
+                payload=stop_dnsmasq_payload,
+                username='robot',
+            )
+        except CouldNotConnectException:
+            return False, messages[3121]
+
+        if exit_code != SUCCESS_CODE:
+            return False, messages[3122]  + f'{exit_code}s.'
 
     # call rcc comms_ssh for dnsmasq config file removal on enabled PodNet
     try:
         exit_code, stdout, stderr = comms_ssh(
             host_ip=enabled,
-            payload=remove_config_payload,
+            payload=delete_config_payload,
             username='robot',
         )
     except CouldNotConnectException:
@@ -462,24 +485,41 @@ def scrub(
     if remove_config != SUCCESS_CODE:
         return False, messages[3124]  + f'{exit_code}s.'
 
-    # call rcc comms_ssh for stopping dnsmasq on disabled PodNet
+    # call rcc comms_ssh on disabled PodNet to find existing process
     try:
         exit_code, stdout, stderr = comms_ssh(
             host_ip=disabled,
-            payload=stop_dnsmasq_payload,
+            payload=find_process_payload,
             username='robot',
         )
     except CouldNotConnectException:
-        return False, messages[3131]
+        return False, messages[3129]
 
-    if stop_dnsmasq != SUCCESS_CODE:
-        return False, messages[3132] + f'{exit_code}s.'
+    stop_dnsmasq_payload = None
+    if (exit_code == SUCCESS_CODE) and (stdout != ""):
+        stop_dnsmasq_payload = f'kill -HUP {stdout}s'
+    else:
+       return False, messages[3130] + f'{exit_code}s.'
+
+    if stop_dnsmasq_payload is not None:
+        # call rcc comms_ssh on disabled PodNet to SIGHUP existing process
+        try:
+            exit_code, stdout, stderr = comms_ssh(
+                host_ip=disabled,
+                payload=stop_dnsmasq_payload,
+                username='robot',
+            )
+        except CouldNotConnectException:
+            return False, messages[3131]
+
+        if exit_code != SUCCESS_CODE:
+            return False, messages[3132]  + f'{exit_code}s.'
 
     # call rcc comms_ssh for dnsmasq config file removal on disabled PodNet
     try:
         exit_code, stdout, stderr = comms_ssh(
             host_ip=disabled,
-            payload=remove_config_payload,
+            payload=delete_config_payload,
             username='robot',
         )
     except CouldNotConnectException:
@@ -487,7 +527,6 @@ def scrub(
 
     if remove_config != SUCCESS_CODE:
         return False, messages[3134]  + f'{exit_code}s.'
-
 
     return True, messages[1100]
 
