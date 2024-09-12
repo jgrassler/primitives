@@ -380,7 +380,7 @@ def scrub(
         3124: f'3124: Failed to delete config files {dnsmasq_config_path}s, {dnsmasq_hosts_path}s on the enabled PodNet. Payload exited with status ',
         3129: f'3129: Failed to run find_process_payload on the disabled PodNet. Payload exited with status ',
         3130: f'3130: Successfully created {dnsmasq_config_path}, {dnsmasq_hosts_path} and started dnsmasq on enabled PodNet '
-              f'but failed to connect to the disabled PodNet from the config file {config_file} for create_config_payload.',
+              f'but failed to connect to the disabled PodNet from the config file {config_file} for find_process_payload.',
         3131: f'3131: Successfully stopped dnsmasq and deleted {dnsmasq_config_path}, {dnsmasq_hosts_path} on enabled PodNet '
               f'but failed to connect to the disabled PodNet from the config file {config_file} for stop_dnsmasq_payload.',
         3132: f'3132: Successfully stopped dnsmasq and deleted {dnsmasq_config_path}, {dnsmasq_hosts_path}s on enabled PodNet '
