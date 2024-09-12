@@ -113,7 +113,7 @@ def update(
     # Define message
     messages = {
         1000: f'1000: Successfully update storage {storage}',
-        3021: '3021: Failed to connect to the host',
+        3021: f'3021: Failed to connect to the host {host}',
         3022: f'3022: Failed to update storage_kvm {domain_path}{storage}'
     }
 
