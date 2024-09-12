@@ -193,7 +193,7 @@ def build(
 
     # call rcc comms_ssh on enabled PodNet to find existing process
     try:
-        existing_process, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=enabled,
             payload=find_process_payload,
             username='robot',
@@ -202,14 +202,14 @@ def build(
         return False, messages[3021]
 
     reload_dnsmasq_payload = None
-    if (existing_process.exit_code == SUCCESS_CODE) and (stdout != ""):
+    if (exit_code == SUCCESS_CODE) and (stdout != ""):
         reload_dnsmasq_payload = f'kill -HUP {stdout}s'
     else:
-       return False, messages[3022] + f'{existing_process.exit_code}s.'
+       return False, messages[3022] + f'{exit_code}s.'
 
     # call rcc comms_ssh on enabled PodNet to create config
     try:
-        create_config, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=enabled,
             payload=create_config_payload,
             username='robot',
@@ -217,12 +217,12 @@ def build(
     except CouldNotConnectException:
         return False, messages[3023]
 
-    if create_config.exit_code != SUCCESS_CODE:
-        return False, messages[3024] + f'{create_config.exit_code}s.'
+    if create_config != SUCCESS_CODE:
+        return False, messages[3024] + f'{exit_code}s.'
 
     # call rcc comms_ssh on enabled PodNet to create config
     try:
-        create_hosts, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=enabled,
             payload=create_hosts_payload,
             username='robot',
@@ -230,13 +230,13 @@ def build(
     except CouldNotConnectException:
         return False, messages[3025]
 
-    if create_hosts.exit_code != SUCCESS_CODE:
-        return False, messages[3026] + f'{create_hosts.exit_code}s.'
+    if create_hosts != SUCCESS_CODE:
+        return False, messages[3026] + f'{exit_code}s.'
 
     if reload_dnsmasq_payload is not None:
         # call rcc comms_ssh on enabled PodNet to SIGHUP existing process
         try:
-            reload_dnsmasq, stdout, stderr = comms_ssh(
+            exit_code, stdout, stderr = comms_ssh(
                 host_ip=enabled,
                 payload=reload_dnsmasq_payload,
                 username='robot',
@@ -244,12 +244,12 @@ def build(
         except CouldNotConnectException:
             return False, messages[3027]
 
-        if reload_dnsmasq.exit_code != SUCCESS_CODE:
-            return False, messages[3028]  + f'{reload_dnsmasq.exit_code}s.'
+        if reload_dnsmasq != SUCCESS_CODE:
+            return False, messages[3028]  + f'{exit_code}s.'
     else:
         # call rcc comms_ssh on enabled PodNet
         try:
-            start_dnsmasq, stdout, stderr = comms_ssh(
+            exit_code, stdout, stderr = comms_ssh(
                 host_ip=enabled,
                 payload=start_dnsmasq_payload,
                 username='robot',
@@ -257,12 +257,12 @@ def build(
         except CouldNotConnectException:
             return False, messages[3029]
 
-        if start_dnsmasq.exit_code != SUCCESS_CODE:
-            return False, messages[3030]  + f'{start_dnsmasq.exit_code}s.'
+        if start_dnsmasq != SUCCESS_CODE:
+            return False, messages[3030]  + f'{exit_code}s.'
 
     # call rcc comms_ssh on disabled PodNet to find existing process
     try:
-        existing_process, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=disabled,
             payload=find_process_payload,
             username='robot',
@@ -271,14 +271,14 @@ def build(
         return False, messages[3041]
 
     reload_dnsmasq_payload = None
-    if (existing_process.exit_code == SUCCESS_CODE) and (stdout != ""):
+    if (existing_process == SUCCESS_CODE) and (stdout != ""):
         reload_dnsmasq_payload = f'kill -HUP {stdout}s'
     else:
-       return False, messages[3042] + f'{existing_process.exit_code}s.'
+       return False, messages[3042] + f'{exit_code}s.'
 
     # call rcc comms_ssh on disabled PodNet to create config
     try:
-        create_config, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=disabled,
             payload=create_config_payload,
             username='robot',
@@ -286,12 +286,12 @@ def build(
     except CouldNotConnectException:
         return False, messages[3043]
 
-    if create_config.exit_code != SUCCESS_CODE:
-        return False, messages[3044] + f'{create_config.exit_code}s.'
+    if create_config != SUCCESS_CODE:
+        return False, messages[3044] + f'{exit_code}s.'
 
     # call rcc comms_ssh on disabled PodNet to create config
     try:
-        create_hosts, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=disabled,
             payload=create_hosts_payload,
             username='robot',
@@ -299,13 +299,13 @@ def build(
     except CouldNotConnectException:
         return False, messages[3045]
 
-    if create_hosts.exit_code != SUCCESS_CODE:
-        return False, messages[3046] + f'{create_hosts.exit_code}s.'
+    if create_hosts != SUCCESS_CODE:
+        return False, messages[3046] + f'{exit_code}s.'
 
     if reload_dnsmasq_payload is not None:
         # call rcc comms_ssh on disabled PodNet to SIGHUP existing process
         try:
-            reload_dnsmasq, stdout, stderr = comms_ssh(
+            exit_code, stdout, stderr = comms_ssh(
                 host_ip=disabled,
                 payload=reload_dnsmasq_payload,
                 username='robot',
@@ -313,12 +313,12 @@ def build(
         except CouldNotConnectException:
             return False, messages[3047]
 
-        if reload_dnsmasq.exit_code != SUCCESS_CODE:
-            return False, messages[3048]  + f'{reload_dnsmasq.exit_code}s.'
+        if reload_dnsmasq != SUCCESS_CODE:
+            return False, messages[3048]  + f'{exit_code}s.'
     else:
         # call rcc comms_ssh on disabled PodNet
         try:
-            start_dnsmasq, stdout, stderr = comms_ssh(
+            exit_code, stdout, stderr = comms_ssh(
                 host_ip=disabled,
                 payload=start_dnsmasq_payload,
                 username='robot',
@@ -326,8 +326,8 @@ def build(
         except CouldNotConnectException:
             return False, messages[3049]
 
-        if start_dnsmasq.exit_code != SUCCESS_CODE:
-            return False, messages[3050]  + f'{start_dnsmasq.exit_code}s.'
+        if start_dnsmasq != SUCCESS_CODE:
+            return False, messages[3050]  + f'{exit_code}s.'
 
     return True, messages[1000]
 
@@ -438,7 +438,7 @@ def scrub(
 
     # call rcc comms_ssh for stopping dnsmasq on enabled PodNet
     try:
-        stop_dnsmasq, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=enabled,
             payload=stop_dnsmasq_payload,
             username='robot',
@@ -446,12 +446,12 @@ def scrub(
     except CouldNotConnectException:
         return False, messages[3121]
 
-    if stop_dnsmasq.exit_code != SUCCESS_CODE:
-        return False, messages[3122] + f'{stop_dnsmasq.exit_code}s.'
+    if stop_dnsmasq != SUCCESS_CODE:
+        return False, messages[3122] + f'{exit_code}s.'
 
     # call rcc comms_ssh for dnsmasq config file removal on enabled PodNet
     try:
-        remove_config, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=enabled,
             payload=remove_config_payload,
             username='robot',
@@ -459,12 +459,12 @@ def scrub(
     except CouldNotConnectException:
         return False, messages[3123]
 
-    if remove_config.exit_code != SUCCESS_CODE:
-        return False, messages[3124]  + f'{remove_config.exit_code}s.'
+    if remove_config != SUCCESS_CODE:
+        return False, messages[3124]  + f'{exit_code}s.'
 
     # call rcc comms_ssh for stopping dnsmasq on disabled PodNet
     try:
-        stop_dnsmasq, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=disabled,
             payload=stop_dnsmasq_payload,
             username='robot',
@@ -472,12 +472,12 @@ def scrub(
     except CouldNotConnectException:
         return False, messages[3131]
 
-    if stop_dnsmasq.exit_code != SUCCESS_CODE:
-        return False, messages[3132] + f'{stop_dnsmasq.exit_code}s.'
+    if stop_dnsmasq != SUCCESS_CODE:
+        return False, messages[3132] + f'{exit_code}s.'
 
     # call rcc comms_ssh for dnsmasq config file removal on disabled PodNet
     try:
-        remove_config, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=disabled,
             payload=remove_config_payload,
             username='robot',
@@ -485,8 +485,8 @@ def scrub(
     except CouldNotConnectException:
         return False, messages[3133]
 
-    if remove_config.exit_code != SUCCESS_CODE:
-        return False, messages[3134]  + f'{remove_config.exit_code}s.'
+    if remove_config != SUCCESS_CODE:
+        return False, messages[3134]  + f'{exit_code}s.'
 
 
     return True, messages[1100]
@@ -664,7 +664,7 @@ def read(
 
     # call rcc comms_ssh for config retrieval from enabled PodNet
     try:
-        read_config, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=enabled,
             payload=read_config_payload,
             username='robot',
@@ -673,15 +673,15 @@ def read(
         retval = False
         message_list.append(messages[3221])
 
-    if read_config.exit_code != SUCCESS_CODE:
+    if read_config != SUCCESS_CODE:
         retval = False
-        message_list.append(messages[3222] + f'{read_config.exit_code}s.')
+        message_list.append(messages[3222] + f'{exit_code}s.')
 
     data_dict[enabled]['config_file'] = stdout
 
     # call rcc comms_ssh for hosts retrieval from enabled PodNet
     try:
-        read_hosts, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=enabled,
             payload=read_hosts_payload,
             username='robot',
@@ -690,15 +690,15 @@ def read(
         retval = False
         message_list.append(messages[3223])
 
-    if read_hosts.exit_code != SUCCESS_CODE:
+    if read_hosts != SUCCESS_CODE:
         retval = False
-        message_list.append(messages[3224] + f'{read_hosts.exit_code}s.')
+        message_list.append(messages[3224] + f'{exit_code}s.')
 
     data_dict[enabled]['hosts_file'] = stdout
 
     # call rcc comms_ssh for process_status retrieval from enabled PodNet
     try:
-        read_process_status, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=enabled,
             payload=find_process_payload,
             username='robot',
@@ -707,15 +707,15 @@ def read(
         retval = False
         message_list.append(messages[3225])
 
-    if read_process_status.exit_code != SUCCESS_CODE:
+    if read_process_status != SUCCESS_CODE:
         retval = False
-        message_list.append(messages[3226]  + f'{read_process_status.exit_code}s.')
+        message_list.append(messages[3226]  + f'{exit_code}s.')
 
     data_dict[enabled]['process_status'] = stdout
 
     # call rcc comms_ssh for config retrieval from disabled PodNet
     try:
-        read_config, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=disabled,
             payload=read_config_payload,
             username='robot',
@@ -724,15 +724,15 @@ def read(
         retval = False
         message_list.append(messages[3231])
 
-    if read_config.exit_code != SUCCESS_CODE:
+    if read_config != SUCCESS_CODE:
         retval = False
-        message_list.append(messages[3232] + f'{read_config.exit_code}s.')
+        message_list.append(messages[3232] + f'{exit_code}s.')
 
     data_dict[enabled]['config_file'] = stdout
 
     # call rcc comms_ssh for hosts retrieval from disabled PodNet
     try:
-        read_hosts, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=disabled,
             payload=read_hosts_payload,
             username='robot',
@@ -741,15 +741,15 @@ def read(
         retval = False
         message_list.append(messages[3233])
 
-    if read_hosts.exit_code != SUCCESS_CODE:
+    if read_hosts != SUCCESS_CODE:
         retval = False
-        message_list.append(messages[3234] + f'{read_hosts.exit_code}s.')
+        message_list.append(messages[3234] + f'{exit_code}s.')
 
     data_dict[disabled]['hosts_file'] = stdout
 
     # call rcc comms_ssh for process_status retrieval from disabled PodNet
     try:
-        read_process_status, stdout, stderr = comms_ssh(
+        exit_code, stdout, stderr = comms_ssh(
             host_ip=disabled,
             payload=find_process_payload,
             username='robot',
@@ -758,9 +758,9 @@ def read(
         retval = False
         message_list.append(messages[3235])
 
-    if read_process_status.exit_code != SUCCESS_CODE:
+    if read_process_status != SUCCESS_CODE:
         retval = False
-        message_list.append(messages[3236]  + f'{read_process_status.exit_code}s.')
+        message_list.append(messages[3236]  + f'{exit_code}s.')
 
     data_dict[enabled]['process_status'] = stdout
 
