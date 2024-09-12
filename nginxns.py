@@ -311,17 +311,25 @@ def scrub(
         3116: f'3116: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are True',
         3117: f'3117: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
         3118: f'3118: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
-        3121: f'3123: Failed to connect to the enabled PodNet from the config file {config_file} for start_nginx_payload',
-        3122: f'3124: Failed to stop nginx on the enabled PodNet. Payload exited with status ',
-        3123: f'3121: Failed to connect to the enabled PodNet from the config file {config_file} for remove_config_payload',
-        3124: f'3122: Failed to delete config file {nginx_config_path} on the enabled PodNet. Payload exited with status ',
-        3131: f'3131: Successfully stopped nginx and deleted {nginx_config_path} on enabled PodNet but failed to connect to the disabled PodNet '
+        3119: f'3119: Failed to connect to the enabled PodNet from the config file {config_file} for find_proces_payload',
+        3120: f'3120: Failed to find process on the enabled PodNet. Payload exited with status ',
+        3121: f'3121: Failed to connect to the enabled PodNet from the config file {config_file} for stop_nginx_payload',
+        3122: f'3122: Failed to connect to the enabled PodNet from the config file {config_file} for start_nginx_payload',
+        3123: f'3123: Failed to stop nginx on the enabled PodNet. Payload exited with status ',
+        3124: f'3124: Failed to connect to the enabled PodNet from the config file {config_file} for remove_config_payload',
+        3125: f'3125: Failed to delete config file {nginx_config_path} on the enabled PodNet. Payload exited with status ',
+        3129: f'3129: Failed to run find_process_payload on the disabled PodNet. Payload exited with status ',
+        3130: f'3130: Successfully created {nginx_config_path} and started nginx on enabled PodNet '
+              f'but failed to connect to the disabled PodNet from the config file {config_file} for find_process_payload.',
+        3131: f'3131: Successfully stopped nginx and deleted {nginx_config_path} on enabled PodNet '
+              f'but failed to connect to the disabled PodNet from the config file {config_file} for stop_nginx_payload.',
+        3132: f'3132: Successfully stopped nginx and deleted {nginx_config_path} on enabled PodNet but failed to connect to the disabled PodNet '
               f'from the config file {config_file} for stop_nginx_payload.',
-        3132: f'3132: Successfully stopped nginx and deleted {nginx_config_path} on enabled PodNet but failed to stop nginx on the disabled PodNet. '
+        3133: f'3133: Successfully stopped nginx and deleted {nginx_config_path} on enabled PodNet but failed to stop nginx on the disabled PodNet. '
                'Payload exited with status ',
-        3133: f'3133: Successfully stoppend nginx and deleted {nginx_config_path} on enabled PodNet but failed to connect to the disabled PodNet '
+        3134: f'3134: Successfully stoppend nginx and deleted {nginx_config_path} on enabled PodNet but failed to connect to the disabled PodNet '
               f'from the config file {config_file} for remove_config_payload.',
-        3134: f'3134: Successfully stopped nginx on both PodNet nodes and deleted {nginx_config_path} on enabled PodNet but failed to stop nginx on the disabled PodNet. '
+        3135: f'3135: Successfully stopped nginx on both PodNet nodes and deleted {nginx_config_path} on enabled PodNet but failed to stop nginx on the disabled PodNet. '
                'Payload exited with status ',
     }
 
@@ -372,21 +380,40 @@ def scrub(
         return False, messages[3118]
 
     # define payloads
-    stop_nginx_payload = f'kill $(cat {pidfile}s)'
+    find_process_payload = f'ps auxw | grep nginx | grep {nginx_config_path}s'
     delete_config_payload = f'rm -f {nginx_config_path}s'
 
-    # call rcc comms_ssh for stopping nginx on enabled PodNet
+    # call rcc comms_ssh on enabled PodNet to find existing process
     try:
         exit_code, stdout, stderr = comms_ssh(
             host_ip=enabled,
-            payload=stop_nginx_payload,
+            payload=find_process_payload,
             username='robot',
         )
     except CouldNotConnectException:
-        return False, messages[3121]
+        return False, messages[3119]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3122] + f'{exit_code}s.'
+        return False, messages[3120] + f'{exit_code}s.'
+
+    stop_nginx_payload = None
+    if (exit_code == SUCCESS_CODE) and (stdout != ""):
+        stop_nginx_payload = f'kill {stdout}s'
+    else:
+        return False, messages[3121] + f'{exit_code}s.'
+
+    if stop_nginx_payload is not None:
+        # call rcc comms_ssh on enabled PodNet to kill existing process
+        try:
+            exit_code, stdout, stderr = comms_ssh(
+                host_ip=enabled,
+                payload=stop_nginx_payload,
+                username='robot',
+            )
+        except CouldNotConnectException:
+            return False, messages[3122]
+        if exit_code != SUCCESS_CODE:
+            return False, messages[3123]  + f'{exit_code}s.'
 
     # call rcc comms_ssh for nginx config file removal on enabled PodNet
     try:
@@ -396,23 +423,42 @@ def scrub(
             username='robot',
         )
     except CouldNotConnectException:
-        return False, messages[3123]
+        return False, messages[3124]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3124]  + f'{exit_code}s.'
+        return False, messages[3125]  + f'{exit_code}s.'
 
-    # call rcc comms_ssh for stopping nginx on disabled PodNet
+    # call rcc comms_ssh on disabled PodNet to find existing process
     try:
         exit_code, stdout, stderr = comms_ssh(
             host_ip=disabled,
-            payload=stop_nginx_payload,
+            payload=find_process_payload,
             username='robot',
         )
     except CouldNotConnectException:
-        return False, messages[3131]
+        return False, messages[3129]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3132] + f'{exit_code}s.'
+        return False, messages[3130] + f'{exit_code}s.'
+
+    stop_nginx_payload = None
+    if (exit_code == SUCCESS_CODE) and (stdout != ""):
+        stop_nginx_payload = f'kill {stdout}s'
+    else:
+        return False, messages[3131] + f'{exit_code}s.'
+
+    if stop_nginx_payload is not None:
+        # call rcc comms_ssh on disabled PodNet to kill existing process
+        try:
+            exit_code, stdout, stderr = comms_ssh(
+                host_ip=disabled,
+                payload=stop_nginx_payload,
+                username='robot',
+            )
+        except CouldNotConnectException:
+            return False, messages[3132]
+        if exit_code != SUCCESS_CODE:
+            return False, messages[3133]  + f'{exit_code}s.'
 
     # call rcc comms_ssh for nginx config file removal on disabled PodNet
     try:
@@ -422,11 +468,10 @@ def scrub(
             username='robot',
         )
     except CouldNotConnectException:
-        return False, messages[3133]
+        return False, messages[3134]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3134]  + f'{exit_code}s.'
-
+        return False, messages[3135]  + f'{exit_code}s.'
 
     return True, messages[1100]
 
