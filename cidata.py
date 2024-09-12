@@ -231,7 +231,7 @@ def build(
         return False, messages[3021]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3022] + f'{exit_code}s.'
+        return False, messages[3022] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh on enabled PodNet
     try:
@@ -244,7 +244,7 @@ def build(
         return False, messages[3023]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3024]  + f'{exit_code}s.'
+        return False, messages[3024]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh on disabled PodNet
     try:
@@ -257,7 +257,7 @@ def build(
         return False, messages[3031]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3032] + f'{exit_code}s.'
+        return False, messages[3032] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh on disabled PodNet
     try:
@@ -270,7 +270,7 @@ def build(
         return False, messages[3033]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3034]  + f'{exit_code}s.'
+        return False, messages[3034]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
 
     return True, messages[1000]
@@ -387,7 +387,7 @@ def scrub(
         return False, messages[3121]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3122] + f'{exit_code}s.'
+        return False, messages[3122] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh for userdata removal on enabled PodNet
     try:
@@ -400,7 +400,7 @@ def scrub(
         return False, messages[3123]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3124]  + f'{exit_code}s.'
+        return False, messages[3124]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh for metadata removal on disabled PodNet
     try:
@@ -413,7 +413,7 @@ def scrub(
         return False, messages[3131]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3132] + f'{exit_code}s.'
+        return False, messages[3132] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh for userdata removal on disabled PodNet
     try:
@@ -426,7 +426,7 @@ def scrub(
         return False, messages[3133]
 
     if exit_code != SUCCESS_CODE:
-        return False, messages[3134]  + f'{exit_code}s.'
+        return False, messages[3134]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
 
     return True, messages[1100]
@@ -594,7 +594,7 @@ def read(
 
     if exit_code != SUCCESS_CODE:
         retval = False
-        message_list.append(messages[3222] + f'{exit_code}s.')
+        message_list.append(messages[3222] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
 
     data_dict[enabled]['metadata'] = stdout
 
@@ -611,7 +611,7 @@ def read(
 
     if exit_code != SUCCESS_CODE:
         retval = False
-        message_list.append(messages[3224]  + f'{exit_code}s.')
+        message_list.append(messages[3224]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
 
     data_dict[enabled]['userdata'] = stdout
 
@@ -628,7 +628,7 @@ def read(
 
     if exit_code != SUCCESS_CODE:
         retval = False
-        message_list.append(messages[3232] + f'{exit_code}s.')
+        message_list.append(messages[3232] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
 
     data_dict[enabled]['metadata'] = stdout
 
@@ -645,7 +645,7 @@ def read(
 
     if exit_code != SUCCESS_CODE:
         retval = False
-        message_list.append(messages[3234]  + f'{exit_code}s.')
+        message_list.append(messages[3234]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
 
     data_dict[enabled]['userdata'] = stdout
 
