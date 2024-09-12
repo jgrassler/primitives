@@ -803,4 +803,5 @@ def read(
 
     data_dict[enabled]['process_status'] = stdout
 
-    return retval, data_dict, messages[1200]
+    message_list.append(messages[1200])
+    return retval, data_dict, message_list
