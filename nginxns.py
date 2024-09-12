@@ -166,9 +166,9 @@ def build(
     except CouldNotConnectException:
         return False, messages[3020]
 
-    reload_nginx_payload_enabled = None
+    reload_nginx_payload = None
     if (existing_process.exit_code == SUCCESS_CODE) and (stdout != ""):
-        reload_nginx_payload_enabled = f'kill -HUP {stdout}s'
+        reload_nginx_payload = f'kill -HUP {stdout}s'
     else:
        return False, messages[3021] + f'{existing_process.exit_code}s.'
 
