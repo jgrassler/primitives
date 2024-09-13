@@ -57,7 +57,7 @@ def build(
 
     dnsmasq_config_path = '/etc/netns/{namespace}/dnsmasq.conf'
     dnsmasq_hosts_path = '/etc/netns/{namespace}/dnsmasq.hosts'
-    pidfile= '/etc/netns/{namespace}s/dnsmasq.pid'
+    pidfile= '/etc/netns/{namespace}/dnsmasq.pid'
 
     # Define message
     messages = {
