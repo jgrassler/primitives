@@ -39,7 +39,9 @@ def build(
             type: string
             required: true
         config_file:
-            description: path to the config.json file
+            description: |
+                path to the config.json file. Defaults to /opt/robot/config.json
+                if unspecified.
             type: string
             required: false
     return:
@@ -89,7 +91,7 @@ def build(
 
     # Default config_file if it is None
     if config_file is None:
-        config_file = '/etc/cloudcix/pod/configs/config.json'
+        config_file = '/opt/robot/config.json'
 
     # Get load config from config_file
     if not Path(config_file).exists():
@@ -287,7 +289,9 @@ def scrub(
             type: string
             required: true
         config_file:
-            description: path to the config.json file
+            description: |
+                path to the config.json file. Defaults to /opt/robot/config.json
+                if unspecified.
             type: string
             required: false
     return:
@@ -335,7 +339,7 @@ def scrub(
 
     # Default config_file if it is None
     if config_file is None:
-        config_file = '/etc/cloudcix/pod/configs/config.json'
+        config_file = '/opt/robot/config.json'
 
     # Get load config from config_file
     if not Path(config_file).exists():
@@ -489,7 +493,9 @@ def read(
             type: string
             required: true
         config_file:
-            description: path to the config.json file
+            description: |
+                path to the config.json file. Defaults to /opt/robot/config.json
+                if unspecified.
             type: string
             required: false
     return:
@@ -519,7 +525,7 @@ def read(
                   config_file:
                     type: string
                     description: |
-                      The contents of the `metadata` file at domain_path. May be
+                      The contents of the nginx configuration file. May be
                       None upon any read errors.
           errors:
             type: array
@@ -563,7 +569,7 @@ def read(
 
     # Default config_file if it is None
     if config_file is None:
-        config_file = '/etc/cloudcix/pod/configs/config.json'
+        config_file = '/opt/robot/config.json'
 
     # Get load config from config_file
     if not Path(config_file).exists():
