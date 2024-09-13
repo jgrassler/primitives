@@ -51,8 +51,8 @@ def build(
         type: tuple
     """
 
-    nginx_config_path = '/etc/netns/{namespace}/nginx.conf'
-    pidfile= '/etc/netns/{namespace}/nginx.pid'
+    nginx_config_path = f'/etc/netns/{namespace}/nginx.conf'
+    pidfile= f'/etc/netns/{namespace}/nginx.pid'
 
     # Define message
     messages = {
@@ -534,8 +534,8 @@ def read(
               type: string
     """
 
-    nginx_config_path = '/etc/netns/{namespace}/nginx.conf'
-    pidfile = '/etc/netns/{namespace}/nginx.conf'
+    nginx_config_path = f'/etc/netns/{namespace}/nginx.conf'
+    pidfile = f'/etc/netns/{namespace}/nginx.conf'
 
     # Define message
     messages = {
