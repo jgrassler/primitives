@@ -805,7 +805,7 @@ def read(
         retval = False
         message_list.append(messages[3236]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
 
-    data_dict[enabled]['process_status'] = stdout
+    data_dict[disabled]['process_status'] = stdout
 
     message_list.append(messages[1200])
     return retval, data_dict, message_list
