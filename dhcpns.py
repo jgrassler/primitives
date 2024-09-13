@@ -771,7 +771,7 @@ def read(
         retval = False
         message_list.append(messages[3232] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
 
-    data_dict[enabled]['config_file'] = stdout
+    data_dict[disabled]['config_file'] = stdout
 
     # call rcc comms_ssh for hosts retrieval from disabled PodNet
     try:
