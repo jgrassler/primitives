@@ -541,7 +541,7 @@ def read(
     messages = {
         1200: f'1200: Successfully retrieved nginx process status and {nginx_config_path}s from both PodNet nodes.',
         2211: f'2211: Config file {config_file} loaded.',
-        3211: f'3211: Failed to load config file {config_file}, It does not exist.',
+        3211: f'3211: Failed to load config file {config_file}: ',
         3212: f'3212: Failed to get `ipv6_subnet` from config file {config_file}',
         3213: f'3213: Invalid value for `ipv6_subnet` from config file {config_file}',
         3214: f'3214: Failed to get `podnet_a_enabled` from config file {config_file}',
@@ -572,11 +572,13 @@ def read(
         config_file = '/opt/robot/config.json'
 
     # Get load config from config_file
-    if not Path(config_file).exists():
+    try:
+      with Path(config_file).open('r') as file:
+          config = json.load(file)
+    except Exception as e:
         retval = False
-        message_list.append(messages[3211])
-    with Path(config_file).open('r') as file:
-        config = json.load(file)
+        message_list.append(messages[3211] + e.__str__())
+        return retval, data_dict, message_list
 
     # Get the ipv6_subnet from config_file
     ipv6_subnet = config.get('ipv6_subnet', None)
