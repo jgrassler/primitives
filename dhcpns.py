@@ -55,9 +55,9 @@ def build(
         type: tuple
     """
 
-    dnsmasq_config_path = '/etc/netns/{namespace}/dnsmasq.conf'
-    dnsmasq_hosts_path = '/etc/netns/{namespace}/dnsmasq.hosts'
-    pidfile= '/etc/netns/{namespace}/dnsmasq.pid'
+    dnsmasq_config_path = f'/etc/netns/{namespace}/dnsmasq.conf'
+    dnsmasq_hosts_path = f'/etc/netns/{namespace}/dnsmasq.hosts'
+    pidfile= f'/etc/netns/{namespace}/dnsmasq.pid'
 
     # Define message
     messages = {
@@ -356,9 +356,9 @@ def scrub(
         type: tuple
     """
 
-    dnsmasq_config_path = '/etc/netns/{namespace}/dnsmasq.conf'
-    dnsmasq_hosts_path = '/etc/netns/{namespace}/dnsmasq-hosts.conf'
-    pidfile = '/etc/netns/{namespace}/dnsmasq.pid'
+    dnsmasq_config_path = f'/etc/netns/{namespace}/dnsmasq.conf'
+    dnsmasq_hosts_path = f'/etc/netns/{namespace}/dnsmasq-hosts.conf'
+    pidfile = f'/etc/netns/{namespace}/dnsmasq.pid'
 
     # Define message
     messages = {
@@ -588,9 +588,9 @@ def read(
               type: string
     """
 
-    dnsmasq_config_path = '/etc/netns/{namespace}/dnsmasq.conf'
-    dnsmasq_hosts_path = '/etc/netns/{namespace}/dnsmasq.hosts'
-    pidfile= '/etc/netns/{namespace}s/dnsmasq.pid'
+    dnsmasq_config_path = f'/etc/netns/{namespace}/dnsmasq.conf'
+    dnsmasq_hosts_path = f'/etc/netns/{namespace}/dnsmasq.hosts'
+    pidfile= f'/etc/netns/{namespace}s/dnsmasq.pid'
 
     # Define message
     messages = {
