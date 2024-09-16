@@ -143,7 +143,7 @@ def build(
         username='robot',
     )
     if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3021 + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}']
+        return False, messages[3021] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
 
     create_namespace = True
     if exit_code == SUCCESS_CODE:
@@ -158,7 +158,7 @@ def build(
           username='robot',
       )
       if channel_code != CHANNEL_SUCCESS:
-          return False, messages[3022 + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}']
+          return False, messages[3022] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
       if exit_code != SUCCESS_CODE:
           return False, messages[3023]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
@@ -169,7 +169,7 @@ def build(
         username='robot',
     )
     if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3024 + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}']
+        return False, messages[3024] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
     if exit_code != SUCCESS_CODE:
         return False, messages[3025]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
@@ -180,7 +180,7 @@ def build(
         username='robot',
     )
     if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3026 + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}']
+        return False, messages[3026] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
     if exit_code != SUCCESS_CODE:
         return False, messages[3027]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
@@ -191,7 +191,7 @@ def build(
         username='robot',
     )
     if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3031 + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}']
+        return False, messages[3031] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
 
     create_namespace = True
     if exit_code == SUCCESS_CODE:
@@ -206,7 +206,7 @@ def build(
           username='robot',
       )
       if channel_code != CHANNEL_SUCCESS:
-          return False, messages[3032 + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}']
+          return False, messages[3032] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
       if exit_code != SUCCESS_CODE:
           return False, messages[3033]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
@@ -217,7 +217,7 @@ def build(
         username='robot',
     )
     if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3034 + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}']
+        return False, messages[3034] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
     if exit_code != SUCCESS_CODE:
         return False, messages[3035]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
@@ -228,7 +228,7 @@ def build(
         username='robot',
     )
     if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3036 + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}']
+        return False, messages[3036] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
     if exit_code != SUCCESS_CODE:
         return False, messages[3037]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
