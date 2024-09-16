@@ -137,100 +137,100 @@ def build(
     enable_forwardv6_payload = "ip netns exec {name} sysctl --write net.ipv6.conf.all.forwarding=1"
 
     # call rcc comms_ssh on enabled PodNet
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=enabled,
         payload=find_namespace_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3021] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3021] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
 
     create_namespace = True
-    if exit_code == SUCCESS_CODE:
+    if ret["exit_code"] == SUCCESS_CODE:
         # No need to create this name space if it exists already
         create_namespace = False
 
     if create_namespace:
       # call rcc comms_ssh on enabled PodNet
-      channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+      ret = comms_ssh(
           host_ip=enabled,
           payload=create_namespace_payload,
           username='robot',
       )
-      if channel_code != CHANNEL_SUCCESS:
-          return False, messages[3022] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
-      if exit_code != SUCCESS_CODE:
-          return False, messages[3023]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+      if ret["channel_code"] != CHANNEL_SUCCESS:
+          return False, messages[3022] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+      if ret["exit_code"] != SUCCESS_CODE:
+          return False, messages[3023]  + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh on enabled PodNet to enable IPv4 forwarding
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=enabled,
         payload=enable_forwardv4_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3024] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
-    if exit_code != SUCCESS_CODE:
-        return False, messages[3025]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3024] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+    if ret["exit_code"] != SUCCESS_CODE:
+        return False, messages[3025]  + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh on enabled PodNet to enable IPv6 forwarding
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=enabled,
         payload=enable_forwardv6_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3026] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
-    if exit_code != SUCCESS_CODE:
-        return False, messages[3027]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3026] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+    if ret["exit_code"] != SUCCESS_CODE:
+        return False, messages[3027]  + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh on disabled PodNet to find name space
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=disabled,
         payload=find_namespace_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3031] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3031] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
 
     create_namespace = True
-    if exit_code == SUCCESS_CODE:
+    if ret["exit_code"] == SUCCESS_CODE:
         # No need to create this name space if it exists already
         create_namespace = False
 
     if create_namespace:
       # call rcc comms_ssh on disabled PodNet to create name space
-      channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+      ret = comms_ssh(
           host_ip=disabled,
           payload=create_namespace_payload,
           username='robot',
       )
-      if channel_code != CHANNEL_SUCCESS:
-          return False, messages[3032] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
-      if exit_code != SUCCESS_CODE:
-          return False, messages[3033]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+      if ret["channel_code"] != CHANNEL_SUCCESS:
+          return False, messages[3032] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+      if ret["exit_code"] != SUCCESS_CODE:
+          return False, messages[3033]  + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh on disabled PodNet to enable IPv4 forwarding
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=disabled,
         payload=enable_forwardv4_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3034] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
-    if exit_code != SUCCESS_CODE:
-        return False, messages[3035]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3034] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+    if ret["exit_code"] != SUCCESS_CODE:
+        return False, messages[3035]  + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh on disabled PodNet to enable IPv6 forwarding
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=disabled,
         payload=enable_forwardv6_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3036] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
-    if exit_code != SUCCESS_CODE:
-        return False, messages[3037]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3036] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+    if ret["exit_code"] != SUCCESS_CODE:
+        return False, messages[3037]  + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     return True, messages[1000]
 
@@ -332,56 +332,56 @@ def scrub(
     delete_namespace_payload = "ip netns delete {name}"
 
     # call rcc comms_ssh on enabled PodNet
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=enabled,
         payload=find_namespace_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3121] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3121] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
 
     delete_namespace = False
-    if exit_code == SUCCESS_CODE:
+    if ret["exit_code"] == SUCCESS_CODE:
         # No need to delete this name space if it exists already
         delete_namespace = True
 
     if delete_namespace:
       # call rcc comms_ssh on enabled PodNet
-      channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+      ret = comms_ssh(
           host_ip=enabled,
           payload=delete_namespace_payload,
           username='robot',
       )
-      if channel_code != CHANNEL_SUCCESS:
-          return False, messages[3122] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
-      if exit_code != SUCCESS_CODE:
-          return False, messages[3123]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+      if ret["channel_code"] != CHANNEL_SUCCESS:
+          return False, messages[3122] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+      if ret["exit_code"] != SUCCESS_CODE:
+          return False, messages[3123]  + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh on disabled PodNet
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=disabled,
         payload=find_namespace_payload,
         username='robot',
     )
     if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3131] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
+        return False, messages[3131] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
 
     delete_namespace = False
-    if exit_code == SUCCESS_CODE:
+    if ret["exit_code"] == SUCCESS_CODE:
         # No need to delete this name space if it exists already
         delete_namespace = True
 
     if delete_namespace:
       # call rcc comms_ssh on disabled PodNet
-      channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+      ret = comms_ssh(
           host_ip=disabled,
           payload=delete_namespace_payload,
           username='robot',
       )
-      if channel_code != CHANNEL_SUCCESS:
-          return False, messages[3132] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
-      if exit_code != SUCCESS_CODE:
-          return False, messages[3133]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+      if ret["channel_code"] != CHANNEL_SUCCESS:
+          return False, messages[3132] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+      if ret["exit_code"] != SUCCESS_CODE:
+          return False, messages[3133]  + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     return True, messages[1000]
 
@@ -545,113 +545,113 @@ def read(
     find_forwardv6_payload = "ip netns exec {name} sysctl --write net.ipv6.conf.all.forwarding | awk {print $3}'"
 
     # call rcc comms_ssh for name space retrieval from enabled PodNet
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=enabled,
         payload=find_namespace_payload,
         username='robot',
     )
 
-    if channel_code != CHANNEL_SUCCESS:
+    if ret["channel_code"] != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3221] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
+        message_list.append(messages[3221] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
 
-    if (exit_code is not None) and (exit_code != SUCCESS_CODE):
+    if (ret["exit_code"] is not None) and (ret["exit_code"] != SUCCESS_CODE):
         retval = False
-        message_list.append(messages[3222] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
+        message_list.append(messages[3222] + f'{exit_code}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
     else:
-        data_dict[enabled]['entry'] = stdout
+        data_dict[enabled]['entry'] = ret["payload_message"]
 
     # call rcc comms_ssh for IPv4 forwarding status retrieval from enabled PodNet
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=enabled,
         payload=find_forwardv4_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
+    if ret["channel_code"] != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3223] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
+        message_list.append(messages[3223] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
 
-    if (exit_code is not None) and (exit_code != SUCCESS_CODE):
+    if (ret["exit_code"] is not None) and (ret["exit_code"] != SUCCESS_CODE):
         retval = False
-        message_list.append(messages[3224] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
+        message_list.append(messages[3224] + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
     else:
-        if stdout != '1':
+        if ret["payload_message"] != '1':
             retval = False
-            message_list.append(messages[3225] + f'(is: {stdout}s, should be: `1`).')
-        data_dict[enabled]['forwardv4'] = stdout
+            message_list.append(messages[3225] + f'(is: {ret["payload_message"]}s, should be: `1`).')
+        data_dict[enabled]['forwardv4'] = ret["payload_message"]
 
     # call rcc comms_ssh for IPv6 forwarding status retrieval from enabled PodNet
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=enabled,
         payload=find_forwardv6_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
+    if ret["channel_code"] != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3226] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
+        message_list.append(messages[3226] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
 
-    if (exit_code is not None) and (exit_code != SUCCESS_CODE):
+    if (ret["exit_code"] is not None) and (ret["exit_code"] != SUCCESS_CODE):
         retval = False
-        message_list.append(messages[3227] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
+        message_list.append(messages[3227] + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
     else:
-        if stdout != '1':
+        if ret["payload_message"] != '1':
             retval = False
-            message_list.append(messages[3228] + f'(is: {stdout}s, should be: `1`).')
-        data_dict[enabled]['forwardv6'] = stdout
+            message_list.append(messages[3228] + f'(is: {ret["payload_message"]}s, should be: `1`).')
+        data_dict[enabled]['forwardv6'] = ret["payload_message"]
 
     # call rcc comms_ssh for name space retrieval from disabled PodNet
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=disabled,
         payload=find_namespace_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
+    if ret["channel_code"] != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3231] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
+        message_list.append(messages[3231] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
 
-    if (exit_code is not None) and (exit_code != SUCCESS_CODE):
+    if (ret["exit_code"] is not None) and (ret["exit_code"] != SUCCESS_CODE):
         retval = False
-        message_list.append(messages[3232] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
+        message_list.append(messages[3232] + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
     else:
-        data_dict[disabled]['entry'] = stdout
+        data_dict[disabled]['entry'] = ret["payload_message"]
 
     # call rcc comms_ssh for IPv4 forwarding status retrieval from disabled PodNet
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=disabled,
         payload=find_forwardv4_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
+    if ret["channel_code"] != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3233] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
+        message_list.append(messages[3233] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
 
-    if (exit_code is not None) and (exit_code != SUCCESS_CODE):
+    if (ret["exit_code"] is not None) and (ret["exit_code"] != SUCCESS_CODE):
         retval = False
-        message_list.append(messages[3234] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
+        message_list.append(messages[3234] + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
     else:
-        if stdout != '1':
+        if ret["payload_message"] != '1':
             retval = False
-            message_list.append(messages[3235] + f'(is: {stdout}s, should be: `1`).')
-        data_dict[disabled]['forwardv4'] = stdout
+            message_list.append(messages[3235] + f'(is: {ret["payload_message"]}s, should be: `1`).')
+        data_dict[disabled]['forwardv4'] = ret["payload_message"]
 
     # call rcc comms_ssh for IPv6 forwarding status retrieval from disabled PodNet
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=disabled,
         payload=find_forwardv6_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
+    if ret["channel_code"] != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3236] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
+        message_list.append(messages[3236] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
 
-    if (exit_code is not None) and (exit_code != SUCCESS_CODE):
+    if (ret["exit_code"] is not None) and (ret["exit_code"] != SUCCESS_CODE):
         retval = False
-        message_list.append(messages[3237] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
+        message_list.append(messages[3237] + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
     else:
-        if stdout != '1':
+        if ret["payload_message"] != '1':
             retval = False
-            message_list.append(messages[3238] + f'(is: {stdout}s, should be: `1`).')
-        data_dict[disabled]['forwardv6'] = stdout
+            message_list.append(messages[3238] + f'(is: {ret["payload_message"]}s, should be: `1`).')
+        data_dict[disabled]['forwardv6'] = ret["payload_message"]
 
     message_list.append(messages[1200])
     return retval, data_dict, message_list
