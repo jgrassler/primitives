@@ -8,7 +8,7 @@ import ipaddress
 from pathlib import Path
 from typing import Tuple
 # lib
-from cloudcix.rcc import comms_ssh, CouldNotConnectException
+from cloudcix.rcc import comms_ssh, CHANNEL_SUCCESS, VALIDATION_ERROR, CONNECTION_ERROR
 # local
 
 
@@ -59,25 +59,25 @@ def build(
         3016: f'3016: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are True',
         3017: f'3017: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
         3018: f'3018: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
-        3021: f'3021: Failed to connect to the enabled PodNet from the config file {config_file} for find_namespace_payload',
-        3022: f'3022: Failed to connect to the enabled PodNet from the config file {config_file} for create_namespace_payload',
+        3021: f'3021: Failed to connect to the enabled PodNet from the config file {config_file} for find_namespace_payload: ',
+        3022: f'3022: Failed to connect to the enabled PodNet from the config file {config_file} for create_namespace_payload: ',
         3023: f'3023: Failed to create name space {name} on the enabled PodNet. Payload exited with status ',
         3024: f'3024: Failed to run enable_forwardv4_payload in name space {name} on the enabled PodNet. Payload exited with status ',
-        3025: f'3025: Failed to connect to the enabled PodNet from the config file {config_file} for enable_forwardv4_payload',
+        3025: f'3025: Failed to connect to the enabled PodNet from the config file {config_file} for enable_forwardv4_payload: ',
         3026: f'3026: Failed to create name space {name} on the enabled PodNet. Payload exited with status ',
         3027: f'3027: Failed to create name space {name} on the enabled PodNet. Payload exited with status ',
         3031: f'3031: Successfully created name space {namespace} on enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file} for find_namespace_payload',
+              f'from the config file {config_file} for find_namespace_payload: ',
         3032: f'3032: Successfully created name space {namespace} on enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file} for create_namespace_payload',
+              f'from the config file {config_file} for create_namespace_payload: ',
         3033: f'3033: Successfully created name space {namespace} on enabled PodNet but failed to create on the disabled PodNet. '
                'Payload exited with status ',
         3034: f'3034: Successfully created name space {namespace} on both PodNet nodes but failed to connect to the disabled PodNet '
-              f'from the config file {config_file} for enable_forwardv4_payload',
+              f'from the config file {config_file} for enable_forwardv4_payload: ',
         3035: f'3035: Successfully created name space {namespace} on both PodNet nodes but failed to run enable_forwardv4_payload on '
               f'disabled PodNet. Payload exited with status ',
         3036: f'3036: Successfully created name space {namespace} and enabled IPv4 forwarding on both PodNet nodes but failed to '
-              f'connect to the disabled PodNet from the config file {config_file} for enable_forwardv6_payload',
+              f'connect to the disabled PodNet from the config file {config_file} for enable_forwardv6_payload: ',
         3037: f'3037: Successfully created name space {namespace} both PodNet nodes but failed to run enable_forwardv6_payload on '
               f'disabled PodNet. Payload exited with status ',
     }
@@ -137,14 +137,13 @@ def build(
     enable_forwardv6_payload = "ip netns exec {name} sysctl --write net.ipv6.conf.all.forwarding=1"
 
     # call rcc comms_ssh on enabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=enabled,
-            payload=find_namespace_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3021]
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=enabled,
+        payload=find_namespace_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
+        return False, messages[3021 + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}']
 
     create_namespace = True
     if exit_code == SUCCESS_CODE:
@@ -153,50 +152,46 @@ def build(
 
     if create_namespace:
       # call rcc comms_ssh on enabled PodNet
-      try:
-          exit_code, stdout, stderr = comms_ssh(
-              host_ip=enabled,
-              payload=create_namespace_payload,
-              username='robot',
-          )
-      except CouldNotConnectException:
-          return False, messages[3022]
+      channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+          host_ip=enabled,
+          payload=create_namespace_payload,
+          username='robot',
+      )
+      if channel_code != CHANNEL_SUCCESS:
+          return False, messages[3022 + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}']
       if exit_code != SUCCESS_CODE:
           return False, messages[3023]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh on enabled PodNet to enable IPv4 forwarding
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=enabled,
-            payload=enable_forwardv4_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3024]
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=enabled,
+        payload=enable_forwardv4_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
+        return False, messages[3024 + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}']
     if exit_code != SUCCESS_CODE:
         return False, messages[3025]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh on enabled PodNet to enable IPv6 forwarding
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=enabled,
-            payload=enable_forwardv6_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3026]
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=enabled,
+        payload=enable_forwardv6_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
+        return False, messages[3026 + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}']
     if exit_code != SUCCESS_CODE:
         return False, messages[3027]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh on disabled PodNet to find name space
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=disabled,
-            payload=find_namespace_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3031]
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=disabled,
+        payload=find_namespace_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
+        return False, messages[3031 + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}']
 
     create_namespace = True
     if exit_code == SUCCESS_CODE:
@@ -205,38 +200,35 @@ def build(
 
     if create_namespace:
       # call rcc comms_ssh on disabled PodNet to create name space
-      try:
-          exit_code, stdout, stderr = comms_ssh(
-              host_ip=disabled,
-              payload=create_namespace_payload,
-              username='robot',
-          )
-      except CouldNotConnectException:
-          return False, messages[3032]
+      channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+          host_ip=disabled,
+          payload=create_namespace_payload,
+          username='robot',
+      )
+      if channel_code != CHANNEL_SUCCESS:
+          return False, messages[3032 + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}']
       if exit_code != SUCCESS_CODE:
           return False, messages[3033]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh on disabled PodNet to enable IPv4 forwarding
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=disabled,
-            payload=enable_forwardv4_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3034]
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=disabled,
+        payload=enable_forwardv4_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
+        return False, messages[3034 + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}']
     if exit_code != SUCCESS_CODE:
         return False, messages[3035]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh on disabled PodNet to enable IPv6 forwarding
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=disabled,
-            payload=enable_forwardv6_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3036]
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=disabled,
+        payload=enable_forwardv6_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
+        return False, messages[3036 + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}']
     if exit_code != SUCCESS_CODE:
         return False, messages[3037]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
@@ -276,13 +268,13 @@ def scrub(
         3116: f'3116: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are True',
         3117: f'3117: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
         3118: f'3118: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
-        3121: f'3121: Failed to connect to the enabled PodNet from the config file {config_file} for find_namespace_payload',
-        3122: f'3122: Failed to connect to the enabled PodNet from the config file {config_file} for delete_namespace_payload',
+        3121: f'3121: Failed to connect to the enabled PodNet from the config file {config_file} for find_namespace_payload: ',
+        3122: f'3122: Failed to connect to the enabled PodNet from the config file {config_file} for delete_namespace_payload: ',
         3123: f'3123: Failed to delete name space {name} on the enabled PodNet. Payload exited with status ',
         3131: f'3131: Successfully deleted name space {namespace} on enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file} for find_namespace_payload',
+              f'from the config file {config_file} for find_namespace_payload: ',
         3132: f'3132: Successfully deleted name space {namespace} on enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file} for delete_namespace_payload',
+              f'from the config file {config_file} for delete_namespace_payload: ',
         3133: f'3133: Successfully deleted name space {namespace} on enabled PodNet but failed to delete on the disabled PodNet. '
                'Payload exited with status ',
     }
@@ -340,14 +332,13 @@ def scrub(
     delete_namespace_payload = "ip netns delete {name}"
 
     # call rcc comms_ssh on enabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=enabled,
-            payload=find_namespace_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3121]
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=enabled,
+        payload=find_namespace_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
+        return False, messages[3121] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
 
     delete_namespace = False
     if exit_code == SUCCESS_CODE:
@@ -356,26 +347,24 @@ def scrub(
 
     if delete_namespace:
       # call rcc comms_ssh on enabled PodNet
-      try:
-          exit_code, stdout, stderr = comms_ssh(
-              host_ip=enabled,
-              payload=delete_namespace_payload,
-              username='robot',
-          )
-      except CouldNotConnectException:
-          return False, messages[3122]
+      channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+          host_ip=enabled,
+          payload=delete_namespace_payload,
+          username='robot',
+      )
+      if channel_code != CHANNEL_SUCCESS:
+          return False, messages[3122] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
       if exit_code != SUCCESS_CODE:
           return False, messages[3123]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh on disabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=disabled,
-            payload=find_namespace_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3131]
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=disabled,
+        payload=find_namespace_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
+        return False, messages[3131] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
 
     delete_namespace = False
     if exit_code == SUCCESS_CODE:
@@ -384,14 +373,13 @@ def scrub(
 
     if delete_namespace:
       # call rcc comms_ssh on disabled PodNet
-      try:
-          exit_code, stdout, stderr = comms_ssh(
-              host_ip=disabled,
-              payload=delete_namespace_payload,
-              username='robot',
-          )
-      except CouldNotConnectException:
-          return False, messages[3132]
+      channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+          host_ip=disabled,
+          payload=delete_namespace_payload,
+          username='robot',
+      )
+      if channel_code != CHANNEL_SUCCESS:
+          return False, messages[3132] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
       if exit_code != SUCCESS_CODE:
           return False, messages[3133]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
@@ -461,20 +449,20 @@ def read(
         3216: f'3216: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are True',
         3217: f'3217: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
         3218: f'3218: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
-        3221: f'3221: Failed to connect to the enabled PodNet from the config file {config_file} for find_namespace_payload',
+        3221: f'3221: Failed to connect to the enabled PodNet from the config file {config_file} for find_namespace_payload: ',
         3222: f'3222: Failed to find name space {name} on the enabled PodNet. Payload exited with status ',
         3223: f'3223: Failed to connect to the enabled PodNet from the config file {config_file} for find_forwardv4_payload',
         3224: f'3224: Failed to run find_forwardv4_payload {name} on the enabled PodNet. Payload exited with status ',
         3225: f'3225: Unexpected value for sysctl net.ipv4.ip_forward in name space {name} on the enabled PodNet ',
-        3226: f'3226: Failed to connect to the enabled PodNet from the config file {config_file} for find_forwardv6_payload',
+        3226: f'3226: Failed to connect to the enabled PodNet from the config file {config_file} for find_forwardv6_payload: ',
         3227: f'3227: Failed to run {name} find_forwardv4_payload on the enabled PodNet. Payload exited with status ',
         3228: f'3228: Unexpected value for sysctl net.ipv6.conf.all.forwarding in name space {name} on the enabled PodNet ',
-        3231: f'3231: Failed to connect to the disabled PodNet from the config file {config_file} for find_namespace_payload',
+        3231: f'3231: Failed to connect to the disabled PodNet from the config file {config_file} for find_namespace_payload: ',
         3232: f'3232: Failed to find name space {name} on the disabled PodNet. Payload exited with status ',
-        3233: f'3233: Failed to connect to the disabled PodNet for find_forwardv4_payload.',
+        3233: f'3233: Failed to connect to the disabled PodNet for find_forwardv4_payload.: ',
         3234: f'3234: Failed to run find_forwardv4_payload on the disabled PodNet. Payload exited with status ',
         3235: f'3235: Value for sysctl net.ipv4.ip_forward on disabled PodNet is unexpected ',
-        3236: f'3236: Failed to connect to the disabled PodNet from the config file {config_file} for find_forwardv6_payload',
+        3236: f'3236: Failed to connect to the disabled PodNet from the config file {config_file} for find_forwardv6_payload: ',
         3237: f'3237: Failed to run find_forwardv6_payload on disabled PodNet. Payload exited with status ',
         3238: f'3238: Value for sysctl net.ipv6.conf.all.forwarding on disabled PodNet is unexpected ',
     }
@@ -557,16 +545,15 @@ def read(
     find_forwardv6_payload = "ip netns exec {name} sysctl --write net.ipv6.conf.all.forwarding | awk {print $3}'"
 
     # call rcc comms_ssh for name space retrieval from enabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=enabled,
-            payload=find_namespace_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=enabled,
+        payload=find_namespace_payload,
+        username='robot',
+    )
+
+    if channel_code != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3221])
-        exit_code = None    # Make sure this is defined
+        message_list.append(messages[3221] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
 
     if (exit_code is not None) and (exit_code != SUCCESS_CODE):
         retval = False
@@ -575,16 +562,14 @@ def read(
         data_dict[enabled]['entry'] = stdout
 
     # call rcc comms_ssh for IPv4 forwarding status retrieval from enabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=enabled,
-            payload=find_forwardv4_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=enabled,
+        payload=find_forwardv4_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3223])
-        exit_code = None    # Make sure this is defined
+        message_list.append(messages[3223] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
 
     if (exit_code is not None) and (exit_code != SUCCESS_CODE):
         retval = False
@@ -596,16 +581,14 @@ def read(
         data_dict[enabled]['forwardv4'] = stdout
 
     # call rcc comms_ssh for IPv6 forwarding status retrieval from enabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=enabled,
-            payload=find_forwardv6_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=enabled,
+        payload=find_forwardv6_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3226])
-        exit_code = None    # Make sure this is defined
+        message_list.append(messages[3226] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
 
     if (exit_code is not None) and (exit_code != SUCCESS_CODE):
         retval = False
@@ -617,16 +600,14 @@ def read(
         data_dict[enabled]['forwardv6'] = stdout
 
     # call rcc comms_ssh for name space retrieval from disabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=disabled,
-            payload=find_namespace_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=disabled,
+        payload=find_namespace_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3231])
-        exit_code = None    # Make sure this is defined
+        message_list.append(messages[3231] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
 
     if (exit_code is not None) and (exit_code != SUCCESS_CODE):
         retval = False
@@ -635,16 +616,14 @@ def read(
         data_dict[disabled]['entry'] = stdout
 
     # call rcc comms_ssh for IPv4 forwarding status retrieval from disabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=disabled,
-            payload=find_forwardv4_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=disabled,
+        payload=find_forwardv4_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3233])
-        exit_code = None    # Make sure this is defined
+        message_list.append(messages[3233] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
 
     if (exit_code is not None) and (exit_code != SUCCESS_CODE):
         retval = False
@@ -656,16 +635,14 @@ def read(
         data_dict[disabled]['forwardv4'] = stdout
 
     # call rcc comms_ssh for IPv6 forwarding status retrieval from disabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=disabled,
-            payload=find_forwardv6_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=disabled,
+        payload=find_forwardv6_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3236])
-        exit_code = None    # Make sure this is defined
+        message_list.append(messages[3236] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
 
     if (exit_code is not None) and (exit_code != SUCCESS_CODE):
         retval = False
