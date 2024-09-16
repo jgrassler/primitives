@@ -11,7 +11,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Tuple
 # lib
-from cloudcix.rcc import comms_ssh, CouldNotConnectException
+from cloudcix.rcc import comms_ssh, CHANNEL_SUCCESS, VALIDATION_ERROR, CONNECTION_ERROR
 # local
 
 
@@ -67,23 +67,23 @@ def build(
         3017: f'3017: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
         3018: f'3018: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
         3019: f'3019: Failed to render jinja2 template for {nginx_conf_path}',
-        3020: f'3020: Failed to connect to the enabled PodNet from the config file {config_file} for find_process_payload',
+        3020: f'3020: Failed to connect to the enabled PodNet from the config file {config_file} for find_process_payload: ',
         3021: f'3021: Failed to run find_process_payload on the enabled PodNet. Payload exited with status ',
-        3022: f'3022: Failed to connect to the enabled PodNet from the config file {config_file} for create_config_payload',
+        3022: f'3022: Failed to connect to the enabled PodNet from the config file {config_file} for create_config_payload: ',
         3023: f'3023: Failed to create config file {nginx_config_path} on the enabled PodNet. Payload exited with status ',
-        3024: f'3024: Failed to connect to the enabled PodNet from the config file {config_file} for reload_nginx_payload',
+        3024: f'3024: Failed to connect to the enabled PodNet from the config file {config_file} for reload_nginx_payload: ',
         3025: f'3025: Failed to run reload_nginx_payload on the enabled PodNet. Payload exited with status ',
-        3026: f'3026: Failed to connect to the enabled PodNet from the config file {config_file} for start_nginx_payload',
+        3026: f'3026: Failed to connect to the enabled PodNet from the config file {config_file} for start_nginx_payload: ',
         3027: f'3027: Failed to start nginx on the enabled PodNet. Payload exited with status ',
-        3030: f'3030: Failed to connect to the enabled PodNet from the config file {config_file} for find_process_payload',
+        3030: f'3030: Failed to connect to the enabled PodNet from the config file {config_file} for find_process_payload: ',
         3031: f'3031: Failed to run find_process_payload on the disabled PodNet. Payload exited with status ',
         3032: f'3032: Successfully created {nginx_config_path} and started nginx on enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file} for create_config_payload.',
+              f'from the config file {config_file} for create_config_payload.: ',
         3033: f'3033: Successfully created {nginx_config_path} and started nginx on enabled PodNet but failed to create {nginx_config_path} on the disabled PodNet. '
                'Payload exited with status ',
-        3034: f'3034: Failed to connect to the disabled PodNet from the config file {config_file} for reload_nginx_payload',
+        3034: f'3034: Failed to connect to the disabled PodNet from the config file {config_file} for reload_nginx_payload: ',
         3035: f'3035: Failed to run reload_nginx_payload on the disabled PodNet. Payload exited with status ',
-        3036: f'3036: Successfully created {nginx_config_path} on both PodNet nodes and started nginx on enabled PodNet but failed to connect to the disabled PodNet '
+        3036: f'3036: Successfully created {nginx_config_path} on both PodNet nodes and started nginx on enabled PodNet but failed to connect to the disabled PodNet:  '
               f'from the config file {config_file} for start_nginx_payload.',
         3037: f'3037: Successfully created {nginx_config_path} on both PodNet nodes and started nginx on enabled PodNet but failed to start nginx on the disabled PodNet. '
                'Payload exited with status ',
@@ -159,117 +159,109 @@ def build(
     start_nginx_payload = f'ip netns exec {namespace} nginx -c {nginx_conf_path}s'
 
     # call rcc comms_ssh on enabled PodNet to find existing process
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=enabled,
-            payload=find_process_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3020]
+    ret = comms_ssh(
+        host_ip=enabled,
+        payload=find_process_payload,
+        username='robot',
+    )
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3020] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
 
     reload_nginx_payload = None
-    if (exit_code == SUCCESS_CODE) and (stdout != ""):
-        reload_nginx_payload = f'kill -HUP {stdout}s'
+    if (ret["payload_code"] == SUCCESS_CODE) and (ret["payload_message"] != ""):
+        reload_nginx_payload = f'kill -HUP {ret["payload_message"]}s'
     else:
-       return False, messages[3021] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+       return False, messages[3021] + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh on enabled PodNet to create config
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=enabled,
-            payload=create_config_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3022]
+    ret = comms_ssh(
+        host_ip=enabled,
+        payload=create_config_payload,
+        username='robot',
+    )
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3022] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
 
-    if exit_code != SUCCESS_CODE:
-        return False, messages[3023] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+    if ret["payload_code"] != SUCCESS_CODE:
+        return False, messages[3023] + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     if reload_nginx_payload is not None:
         # call rcc comms_ssh on enabled PodNet to SIGHUP existing process
-        try:
-            exit_code, stdout, stderr = comms_ssh(
-                host_ip=enabled,
-                payload=reload_nginx_payload,
-                username='robot',
-            )
-        except CouldNotConnectException:
-            return False, messages[3024]
+        ret = comms_ssh(
+            host_ip=enabled,
+            payload=reload_nginx_payload,
+            username='robot',
+        )
+        if ret["channel_code"] != CHANNEL_SUCCESS:
+            return False, messages[3024] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
 
-        if exit_code != SUCCESS_CODE:
-            return False, messages[3025]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+        if ret["payload_code"] != SUCCESS_CODE:
+            return False, messages[3025]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
     else:
         # call rcc comms_ssh on enabled PodNet
-        try:
-            exit_code, stdout, stderr = comms_ssh(
-                host_ip=enabled,
-                payload=start_nginx_payload,
-                username='robot',
-            )
-        except CouldNotConnectException:
-            return False, messages[3026]
+        ret = comms_ssh(
+            host_ip=enabled,
+            payload=start_nginx_payload,
+            username='robot',
+        )
+        if ret["channel_code"] != CHANNEL_SUCCESS:
+            return False, messages[3026] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
 
-        if exit_code != SUCCESS_CODE:
-            return False, messages[3027]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+        if ret["payload_code"] != SUCCESS_CODE:
+            return False, messages[3027]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
 
     # call rcc comms_ssh on disabled PodNet to find existing process
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=enabled,
-            payload=find_process_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3030]
+    ret = comms_ssh(
+        host_ip=enabled,
+        payload=find_process_payload,
+        username='robot',
+    )
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3030] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
 
     reload_nginx_payload_disabled = None
-    if (exit_code == SUCCESS_CODE) and (stdout != ""):
-        reload_nginx_payload_enabled = f'kill -HUP {stdout}s'
+    if (ret["payload_code"] == SUCCESS_CODE) and (ret["payload_message"] != ""):
+        reload_nginx_payload_enabled = f'kill -HUP {ret["payload_message"]}s'
     else:
-       return False, messages[3031] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+       return False, messages[3031] + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh on disabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=disabled,
-            payload=create_config_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3032]
+    ret = comms_ssh(
+        host_ip=disabled,
+        payload=create_config_payload,
+        username='robot',
+    )
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3032] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
 
-    if exit_code != SUCCESS_CODE:
-        return False, messages[3033] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+    if ret["payload_code"] != SUCCESS_CODE:
+        return False, messages[3033] + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     if reload_nginx_payload_disabled is None:
         # call rcc comms_ssh on disabled PodNet to SIGHUP existing process
-        try:
-            exit_code, stdout, stderr = comms_ssh(
-                host_ip=disabled,
-                payload=reload_nginx_payload,
-                username='robot',
-            )
-        except CouldNotConnectException:
-            return False, messages[3034]
+        ret = comms_ssh(
+            host_ip=disabled,
+            payload=reload_nginx_payload,
+            username='robot',
+        )
+        if ret["channel_code"] != CHANNEL_SUCCESS:
+            return False, messages[3034] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
 
-        if exit_code != SUCCESS_CODE:
-            return False, messages[3035]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+        if ret["payload_code"] != SUCCESS_CODE:
+            return False, messages[3035]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
     else:
         # call rcc comms_ssh on disabled PodNet
-        try:
-            exit_code, stdout, stderr = comms_ssh(
-                host_ip=disabled,
-                payload=start_nginx_payload,
-                username='robot',
-            )
-        except CouldNotConnectException:
-            return False, messages[3036]
+        ret = comms_ssh(
+            host_ip=disabled,
+            payload=start_nginx_payload,
+            username='robot',
+        )
+        if ret["channel_code"] != CHANNEL_SUCCESS:
+            return False, messages[3036] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
 
-        if exit_code != SUCCESS_CODE:
-            return False, messages[3037]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+        if ret["payload_code"] != SUCCESS_CODE:
+            return False, messages[3037]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
 
     return True, messages[1000]
@@ -315,24 +307,24 @@ def scrub(
         3116: f'3116: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are True',
         3117: f'3117: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
         3118: f'3118: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
-        3119: f'3119: Failed to connect to the enabled PodNet from the config file {config_file} for find_proces_payload',
+        3119: f'3119: Failed to connect to the enabled PodNet from the config file {config_file} for find_proces_payload: ',
         3120: f'3120: Failed to find process on the enabled PodNet. Payload exited with status ',
-        3121: f'3121: Failed to connect to the enabled PodNet from the config file {config_file} for stop_nginx_payload',
-        3122: f'3122: Failed to connect to the enabled PodNet from the config file {config_file} for start_nginx_payload',
+        3121: f'3121: Failed to connect to the enabled PodNet from the config file {config_file} for stop_nginx_payload: ',
+        3122: f'3122: Failed to connect to the enabled PodNet from the config file {config_file} for start_nginx_payload: ',
         3123: f'3123: Failed to stop nginx on the enabled PodNet. Payload exited with status ',
-        3124: f'3124: Failed to connect to the enabled PodNet from the config file {config_file} for remove_config_payload',
+        3124: f'3124: Failed to connect to the enabled PodNet from the config file {config_file} for remove_config_payload: ',
         3125: f'3125: Failed to delete config file {nginx_config_path} on the enabled PodNet. Payload exited with status ',
         3129: f'3129: Failed to run find_process_payload on the disabled PodNet. Payload exited with status ',
         3130: f'3130: Successfully created {nginx_config_path} and started nginx on enabled PodNet '
-              f'but failed to connect to the disabled PodNet from the config file {config_file} for find_process_payload.',
+              f'but failed to connect to the disabled PodNet from the config file {config_file} for find_process_payload: ',
         3131: f'3131: Successfully stopped nginx and deleted {nginx_config_path} on enabled PodNet '
-              f'but failed to connect to the disabled PodNet from the config file {config_file} for stop_nginx_payload.',
+              f'but failed to connect to the disabled PodNet from the config file {config_file} for stop_nginx_payload: ',
         3132: f'3132: Successfully stopped nginx and deleted {nginx_config_path} on enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file} for stop_nginx_payload.',
+              f'from the config file {config_file} for stop_nginx_payload: ',
         3133: f'3133: Successfully stopped nginx and deleted {nginx_config_path} on enabled PodNet but failed to stop nginx on the disabled PodNet. '
                'Payload exited with status ',
         3134: f'3134: Successfully stoppend nginx and deleted {nginx_config_path} on enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file} for remove_config_payload.',
+              f'from the config file {config_file} for remove_config_payload: ',
         3135: f'3135: Successfully stopped nginx on both PodNet nodes and deleted {nginx_config_path} on enabled PodNet but failed to stop nginx on the disabled PodNet. '
                'Payload exited with status ',
     }
@@ -388,94 +380,88 @@ def scrub(
     delete_config_payload = f'rm -f {nginx_config_path}s'
 
     # call rcc comms_ssh on enabled PodNet to find existing process
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=enabled,
-            payload=find_process_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3119]
+    ret = comms_ssh(
+        host_ip=enabled,
+        payload=find_process_payload,
+        username='robot',
+    )
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3119] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
 
-    if exit_code != SUCCESS_CODE:
-        return False, messages[3120] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+    if ret["payload_code"] != SUCCESS_CODE:
+        return False, messages[3120] + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     stop_nginx_payload = None
-    if (exit_code == SUCCESS_CODE) and (stdout != ""):
-        stop_nginx_payload = f'kill {stdout}s'
+    if (ret["payload_code"] == SUCCESS_CODE) and (ret["payload_message"] != ""):
+        stop_nginx_payload = f'kill {ret["payload_message"]}s'
     else:
-        return False, messages[3121] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+        return False, messages[3121] + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     if stop_nginx_payload is not None:
         # call rcc comms_ssh on enabled PodNet to kill existing process
-        try:
-            exit_code, stdout, stderr = comms_ssh(
-                host_ip=enabled,
-                payload=stop_nginx_payload,
-                username='robot',
-            )
-        except CouldNotConnectException:
-            return False, messages[3122]
-        if exit_code != SUCCESS_CODE:
-            return False, messages[3123]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+        ret = comms_ssh(
+            host_ip=enabled,
+            payload=stop_nginx_payload,
+            username='robot',
+        )
+        if ret["channel_code"] != CHANNEL_SUCCESS:
+            return False, messages[3122] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+        if ret["payload_code"] != SUCCESS_CODE:
+            return False, messages[3123]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh for nginx config file removal on enabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=enabled,
-            payload=remove_config_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3124]
+    ret = comms_ssh(
+        host_ip=enabled,
+        payload=remove_config_payload,
+        username='robot',
+    )
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3124] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
 
-    if exit_code != SUCCESS_CODE:
-        return False, messages[3125]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+    if ret["payload_code"] != SUCCESS_CODE:
+        return False, messages[3125]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh on disabled PodNet to find existing process
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=disabled,
-            payload=find_process_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3129]
+    ret = comms_ssh(
+        host_ip=disabled,
+        payload=find_process_payload,
+        username='robot',
+    )
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3129] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
 
-    if exit_code != SUCCESS_CODE:
-        return False, messages[3130] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+    if ret["payload_code"] != SUCCESS_CODE:
+        return False, messages[3130] + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     stop_nginx_payload = None
-    if (exit_code == SUCCESS_CODE) and (stdout != ""):
-        stop_nginx_payload = f'kill {stdout}s'
+    if (ret["payload_code"] == SUCCESS_CODE) and (ret["payload_message"] != ""):
+        stop_nginx_payload = f'kill {ret["payload_message"]}s'
     else:
-        return False, messages[3131] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+        return False, messages[3131] + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     if stop_nginx_payload is not None:
         # call rcc comms_ssh on disabled PodNet to kill existing process
-        try:
-            exit_code, stdout, stderr = comms_ssh(
-                host_ip=disabled,
-                payload=stop_nginx_payload,
-                username='robot',
-            )
-        except CouldNotConnectException:
-            return False, messages[3132]
-        if exit_code != SUCCESS_CODE:
-            return False, messages[3133]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
-
-    # call rcc comms_ssh for nginx config file removal on disabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
+        ret = comms_ssh(
             host_ip=disabled,
-            payload=remove_config_payload,
+            payload=stop_nginx_payload,
             username='robot',
         )
-    except CouldNotConnectException:
-        return False, messages[3134]
+        if ret["channel_code"] != CHANNEL_SUCCESS:
+            return False, messages[3132] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+        if ret["payload_code"] != SUCCESS_CODE:
+            return False, messages[3133]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
-    if exit_code != SUCCESS_CODE:
-        return False, messages[3135]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+    # call rcc comms_ssh for nginx config file removal on disabled PodNet
+    ret = comms_ssh(
+        host_ip=disabled,
+        payload=remove_config_payload,
+        username='robot',
+    )
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3134] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+
+    if ret["payload_code"] != SUCCESS_CODE:
+        return False, messages[3135]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     return True, messages[1100]
 
@@ -549,16 +535,16 @@ def read(
         3216: f'3216: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are True',
         3217: f'3217: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
         3218: f'3218: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
-        3221: f'3221: Failed to connect to the enabled PodNet from the config file {config_file} for read_config_payload',
+        3221: f'3221: Failed to connect to the enabled PodNet from the config file {config_file} for read_config_payload: ',
         3222: f'3222: Failed to read config file {nginx_config_path}s on the enabled PodNet. Payload exited with status ',
-        3223: f'3223: Failed to connect to the enabled PodNet from the config file {config_file} for find_process_payload',
+        3223: f'3223: Failed to connect to the enabled PodNet from the config file {config_file} for find_process_payload: ',
         3223: f'3224: Failed to execute find_process_payload on the enabled PodNet node. Payload exited with status ',
         3231: f'3231: Successfully retrieved nginx process status and {nginx_config_path}s from enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file} for read_config_payload',
+              f'from the config file {config_file} for read_config_payload: ',
         3232: f'3232: Successfully retrieved nginx process status and {nginx_config_path}s from enabled PodNet but failed to execute read_config_payload '
                'on the disabled PodNet. Payload exited with status ',
         3233: f'3233: Successfully retrieved {nginx_config_file}s from both PodNet nodes but failed to connect to the disabled PodNet '
-              f'from the config file {config_file} for find_process_payload.',
+              f'from the config file {config_file} for find_process_payload: ',
         3234: f'3234: Successfully retrieved {nginx_config_file}s from both PodNet nodes but failed to execute find_process_payload on the disabled PodNet. '
                'Payload exited with status ',
     }
@@ -642,76 +628,68 @@ def read(
     find_process_payload = f'ps auxw | grep nginx | grep {nginx_config_path}s'
 
     # call rcc comms_ssh for config retrieval from enabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=enabled,
-            payload=read_config_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        exit_code = None
+    ret = comms_ssh(
+        host_ip=enabled,
+        payload=read_config_payload,
+        username='robot',
+    )
+    if ret["channel_code"] != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3221])
+        message_list.append(messages[3221] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
 
-    if ( exit_code is not None ) and ( exit_code != SUCCESS_CODE ):
+    if ( ret["payload_code"] is not None ) and ( ret["payload_code"] != SUCCESS_CODE ):
         retval = False
-        message_list.append(messages[3222] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
+        message_list.append(messages[3222] + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
 
-    data_dict[enabled]['config_file'] = stdout
+    data_dict[enabled]['config_file'] = ret["payload_message"]
 
     # call rcc comms_ssh for process_status retrieval from enabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=enabled,
-            payload=find_process_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        exit_code = None
+    ret = comms_ssh(
+        host_ip=enabled,
+        payload=find_process_payload,
+        username='robot',
+    )
+    if ret["channel_code"] != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3223])
+        message_list.append(messages[3223] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
 
-    if ( exit_code is not None ) and ( exit_code != SUCCESS_CODE ):
+    if ( ret["payload_code"] is not None ) and ( ret["payload_code"] != SUCCESS_CODE ):
         retval = False
-        message_list.append(messages[3224]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
+        message_list.append(messages[3224]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
 
-    data_dict[enabled]['process_status'] = stdout
+    data_dict[enabled]['process_status'] = ret["payload_message"]
 
     # call rcc comms_ssh for config retrieval from disabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=disabled,
-            payload=read_config_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        exit_code = None
+    ret = comms_ssh(
+        host_ip=disabled,
+        payload=read_config_payload,
+        username='robot',
+    )
+    if ret["channel_code"] != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3231])
+        message_list.append(messages[3231] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
 
-    if ( exit_code is not None ) and ( exit_code != SUCCESS_CODE ):
+    if ( ret["payload_code"] is not None ) and ( ret["payload_code"] != SUCCESS_CODE ):
         retval = False
-        message_list.append(messages[3232] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
+        message_list.append(messages[3232] + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
 
-    data_dict[enabled]['config_file'] = stdout
+    data_dict[enabled]['config_file'] = ret["payload_message"]
 
     # call rcc comms_ssh for process_status retrieval from disabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=disabled,
-            payload=find_process_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        exit_code = None
+    ret = comms_ssh(
+        host_ip=disabled,
+        payload=find_process_payload,
+        username='robot',
+    )
+    if ret["channel_code"] != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3233])
+        message_list.append(messages[3233] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
 
-    if ( exit_code is not None ) and ( exit_code != SUCCESS_CODE ):
+    if ( ret["payload_code"] is not None ) and ( ret["payload_code"] != SUCCESS_CODE ):
         retval = False
-        message_list.append(messages[3234]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
+        message_list.append(messages[3234]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
 
-    data_dict[disabled]['process_status'] = stdout
+    data_dict[disabled]['process_status'] = ret["payload_message"]
 
     message_list.append(messages[1200])
     return retval, data_dict, message_list
