@@ -8,7 +8,7 @@ import ipaddress
 from pathlib import Path
 from typing import Tuple
 # lib
-from cloudcix.rcc import comms_ssh, CouldNotConnectException
+from cloudcix.rcc import comms_ssh, CHANNEL_SUCCESS, VALIDATION_ERROR, CONNECTION_ERROR
 # local
 
 
@@ -141,16 +141,16 @@ def build(
         3016: f'3016: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are True',
         3017: f'3017: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
         3018: f'3018: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
-        3021: f'3021: Failed to connect to the enabled PodNet from the config file {config_file} for create_metadata payload',
+        3021: f'3021: Failed to connect to the enabled PodNet from the config file {config_file} for create_metadata payload: ',
         3022: f'3022: Failed to create metadata file {domain_path}/metadata on the enabled PodNet. Payload exited with status ',
-        3023: f'3023: Failed to connect to the enabled PodNet from the config file {config_file} for create_userdata payload',
+        3023: f'3023: Failed to connect to the enabled PodNet from the config file {config_file} for create_userdata payload: ',
         3023: f'3024: Failed to create userdata file {domain_path}/userdata on the enabled PodNet Payload exited with status ',
         3031: f'3031: Successfully created `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file}',
+              f'from the config file {config_file}: ',
         3032: f'3032: Successfully created `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to create on the disabled PodNet. '
                'Payload exited with status ',
         3033: f'3033: Successfully created `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to connect to the disabled PodNet. '
-              f'from the config file {config_file}',
+              f'from the config file {config_file}: ',
         3034: f'3034: Successfully created `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to create on the disabled PodNet. '
                'Payload exited with status ',
     }
@@ -221,53 +221,49 @@ def build(
         ])
 
     # call rcc comms_ssh on enabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=enabled,
-            payload=create_metadata_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3021]
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=enabled,
+        payload=create_metadata_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
+        return False, messages[3021] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
 
     if exit_code != SUCCESS_CODE:
         return False, messages[3022] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh on enabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=enabled,
-            payload=create_userdata_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3023]
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=enabled,
+        payload=create_userdata_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
+        return False, messages[3023] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
 
     if exit_code != SUCCESS_CODE:
         return False, messages[3024]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh on disabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=disabled,
-            payload=create_metadata_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3031]
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=disabled,
+        payload=create_metadata_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
+        return False, messages[3031] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
 
     if exit_code != SUCCESS_CODE:
         return False, messages[3032] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh on disabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=disabled,
-            payload=create_userdata_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3033]
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=disabled,
+        payload=create_userdata_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
+        return False, messages[3033] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
 
     if exit_code != SUCCESS_CODE:
         return False, messages[3034]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
@@ -312,16 +308,16 @@ def scrub(
         3116: f'3116: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are True',
         3117: f'3117: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
         3118: f'3118: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
-        3121: f'3121: Failed to connect to the enabled PodNet from the config file {config_file} for remove_metadata payload',
+        3121: f'3121: Failed to connect to the enabled PodNet from the config file {config_file} for remove_metadata payload: ',
         3122: f'3122: Failed to create metadata file {domain_path}/metadata on the enabled PodNet. Payload exited with status ',
-        3123: f'3123: Failed to connect to the enabled PodNet from the config file {config_file} for remove_userdata payload',
+        3123: f'3123: Failed to connect to the enabled PodNet from the config file {config_file} for remove_userdata payload: ',
         3123: f'3124: Failed to create userdata file {domain_path}/userdata on the enabled PodNet Payload exited with status ',
         3131: f'3131: Successfully removed `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file}',
+              f'from the config file {config_file}: ',
         3132: f'3132: Successfully removed `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to create on the disabled PodNet. '
                'Payload exited with status ',
         3133: f'3133: Successfully removed `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to connect to the disabled PodNet. '
-              f'from the config file {config_file}',
+              f'from the config file {config_file}: ',
         3134: f'3134: Successfully removed `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to create on the disabled PodNet. '
                'Payload exited with status ',
     }
@@ -377,53 +373,49 @@ def scrub(
     remove_metadata_payload = f'rm -f {domain_path}/metadata'
 
     # call rcc comms_ssh for metadata removal on enabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=enabled,
-            payload=remove_metadata_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3121]
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=enabled,
+        payload=remove_metadata_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
+        return False, messages[3121] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
 
     if exit_code != SUCCESS_CODE:
         return False, messages[3122] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh for userdata removal on enabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=enabled,
-            payload=remove_userdata_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3123]
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=enabled,
+        payload=remove_userdata_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
+        return False, messages[3123] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
 
     if exit_code != SUCCESS_CODE:
         return False, messages[3124]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh for metadata removal on disabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=disabled,
-            payload=remove_metadata_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3131]
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=disabled,
+        payload=remove_metadata_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
+        return False, messages[3131] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
 
     if exit_code != SUCCESS_CODE:
         return False, messages[3132] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
 
     # call rcc comms_ssh for userdata removal on disabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=disabled,
-            payload=remove_userdata_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
-        return False, messages[3133]
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=disabled,
+        payload=remove_userdata_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
+        return False, messages[3133] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
 
     if exit_code != SUCCESS_CODE:
         return False, messages[3134]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
@@ -493,16 +485,16 @@ def read(
         3216: f'3216: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are True',
         3217: f'3217: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
         3218: f'3218: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
-        3221: f'3221: Failed to connect to the enabled PodNet from the config file {config_file} for read_metadata payload',
+        3221: f'3221: Failed to connect to the enabled PodNet from the config file {config_file} for read_metadata payload: ',
         3222: f'3222: Failed to read metadata file {domain_path}/metadata on the enabled PodNet. Payload exited with status ',
-        3223: f'3223: Failed to connect to the enabled PodNet from the config file {config_file} for read_userdata payload',
+        3223: f'3223: Failed to connect to the enabled PodNet from the config file {config_file} for read_userdata payload: ',
         3223: f'3224: Failed to read userdata file {domain_path}/userdata on the enabled PodNet Payload exited with status ',
         3231: f'3231: Successfully read `metadata` and `userdata` from {domain_path}/ on enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file}',
+              f'from the config file {config_file}: ',
         3232: f'3232: Successfully read `metadata` and `userdata` from {domain_path}/ on enabled PodNet but failed to read on the disabled PodNet. '
                'Payload exited with status ',
         3233: f'3233: Successfully read `metadata` and `userdata` from {domain_path}/ on enabled PodNet but failed to connect to the disabled PodNet. '
-              f'from the config file {config_file}',
+              f'from the config file {config_file}: ',
         3234: f'3234: Successfully read `metadata` and `userdata` from {domain_path}/ on enabled PodNet but failed to read on the disabled PodNet. '
                'Payload exited with status ',
     }
@@ -585,15 +577,14 @@ def read(
     read_metadata_payload = f'cat {domain_path}/metadata'
 
     # call rcc comms_ssh for metadata retrieval from enabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=enabled,
-            payload=read_metadata_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=enabled,
+        payload=read_metadata_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3221])
+        message_list.append(messages[3221] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
         exit_code = None    # Make sure this is defined
 
     if (exit_code != SUCCESS_CODE) and (exit_code is not None):
@@ -603,15 +594,14 @@ def read(
     data_dict[enabled]['metadata'] = stdout
 
     # call rcc comms_ssh for userdata retrieval from enabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=enabled,
-            payload=read_userdata_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=enabled,
+        payload=read_userdata_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3223])
+        message_list.append(messages[3223] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
         exit_code = None    # Make sure this is defined
 
     if (exit_code != SUCCESS_CODE) and (exit_code is not None):
@@ -621,15 +611,14 @@ def read(
     data_dict[enabled]['userdata'] = stdout
 
     # call rcc comms_ssh for metadata retrieval from disabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=disabled,
-            payload=read_metadata_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=disabled,
+        payload=read_metadata_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3231])
+        message_list.append(messages[3231] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
         exit_code = None    # Make sure this is defined
 
     if (exit_code != SUCCESS_CODE) and (exit_code is not None):
@@ -639,15 +628,14 @@ def read(
     data_dict[enabled]['metadata'] = stdout
 
     # call rcc comms_ssh for userdata retrieval from disabled PodNet
-    try:
-        exit_code, stdout, stderr = comms_ssh(
-            host_ip=disabled,
-            payload=read_userdata_payload,
-            username='robot',
-        )
-    except CouldNotConnectException:
+    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+        host_ip=disabled,
+        payload=read_userdata_payload,
+        username='robot',
+    )
+    if channel_code != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3233])
+        message_list.append(messages[3233] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
         exit_code = None    # Make sure this is defined
 
     if (exit_code != SUCCESS_CODE) and (exit_code is not None):
