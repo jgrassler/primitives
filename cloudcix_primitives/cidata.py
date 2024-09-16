@@ -221,52 +221,52 @@ def build(
         ])
 
     # call rcc comms_ssh on enabled PodNet
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=enabled,
         payload=create_metadata_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3021] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3021] + f'channel_code: {ret["channel_code"]}.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
 
-    if exit_code != SUCCESS_CODE:
-        return False, messages[3022] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+    if ret["payload_code"] != SUCCESS_CODE:
+        return False, messages[3022] + f'{ret["payload_code"]}.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh on enabled PodNet
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=enabled,
         payload=create_userdata_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3023] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3023] + f'channel_code: {ret["channel_code"]}.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
 
-    if exit_code != SUCCESS_CODE:
-        return False, messages[3024]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+    if ret["payload_code"] != SUCCESS_CODE:
+        return False, messages[3024]  + f'{ret["payload_code"]}.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh on disabled PodNet
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=disabled,
         payload=create_metadata_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3031] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3031] + f'channel_code: {ret["channel_code"]}.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
 
-    if exit_code != SUCCESS_CODE:
-        return False, messages[3032] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+    if ret["payload_code"] != SUCCESS_CODE:
+        return False, messages[3032] + f'{ret["payload_code"]}.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh on disabled PodNet
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=disabled,
         payload=create_userdata_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3033] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3033] + f'channel_code: {ret["channel_code"]}.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
 
-    if exit_code != SUCCESS_CODE:
-        return False, messages[3034]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+    if ret["payload_code"] != SUCCESS_CODE:
+        return False, messages[3034]  + f'{ret["payload_code"]}.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
 
     return True, messages[1000]
@@ -373,52 +373,52 @@ def scrub(
     remove_metadata_payload = f'rm -f {domain_path}/metadata'
 
     # call rcc comms_ssh for metadata removal on enabled PodNet
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=enabled,
         payload=remove_metadata_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3121] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3121] + f'channel_code: {ret["channel_code"]}.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
 
-    if exit_code != SUCCESS_CODE:
-        return False, messages[3122] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+    if ret["payload_code"] != SUCCESS_CODE:
+        return False, messages[3122] + f'{ret["payload_code"]}.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh for userdata removal on enabled PodNet
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=enabled,
         payload=remove_userdata_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3123] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3123] + f'channel_code: {ret["channel_code"]}.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
 
-    if exit_code != SUCCESS_CODE:
-        return False, messages[3124]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+    if ret["payload_code"] != SUCCESS_CODE:
+        return False, messages[3124]  + f'{ret["payload_code"]}.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh for metadata removal on disabled PodNet
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=disabled,
         payload=remove_metadata_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3131] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3131] + f'channel_code: {ret["channel_code"]}.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
 
-    if exit_code != SUCCESS_CODE:
-        return False, messages[3132] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+    if ret["payload_code"] != SUCCESS_CODE:
+        return False, messages[3132] + f'{ret["payload_code"]}.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh for userdata removal on disabled PodNet
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=disabled,
         payload=remove_userdata_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3133] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
+    if ret["channel_code"] != CHANNEL_SUCCESS:
+        return False, messages[3133] + f'channel_code: {ret["channel_code"]}.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
 
-    if exit_code != SUCCESS_CODE:
-        return False, messages[3134]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}'
+    if ret["payload_code"] != SUCCESS_CODE:
+        return False, messages[3134]  + f'{ret["payload_code"]}.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
 
     return True, messages[1100]
@@ -577,72 +577,68 @@ def read(
     read_metadata_payload = f'cat {domain_path}/metadata'
 
     # call rcc comms_ssh for metadata retrieval from enabled PodNet
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=enabled,
         payload=read_metadata_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
+    if ret["channel_code"] != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3221] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
-        exit_code = None    # Make sure this is defined
+        message_list.append(messages[3221] + f'channel_code: {ret["channel_code"]}.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
 
-    if (exit_code != SUCCESS_CODE) and (exit_code is not None):
+    if (ret["payload_code"] != SUCCESS_CODE) and (ret["payload_code"] is not None):
         retval = False
-        message_list.append(messages[3222] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
+        message_list.append(messages[3222] + f'{ret["payload_code"]}.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
 
-    data_dict[enabled]['metadata'] = stdout
+    data_dict[enabled]['metadata'] = ret["payload_message"]
 
     # call rcc comms_ssh for userdata retrieval from enabled PodNet
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=enabled,
         payload=read_userdata_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
+    if ret["channel_code"] != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3223] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
-        exit_code = None    # Make sure this is defined
+        message_list.append(messages[3223] + f'channel_code: {ret["channel_code"]}.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
 
-    if (exit_code != SUCCESS_CODE) and (exit_code is not None):
+    if (ret["payload_code"] != SUCCESS_CODE) and (ret["payload_code"] is not None):
         retval = False
-        message_list.append(messages[3224]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
+        message_list.append(messages[3224]  + f'{ret["payload_code"]}.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
 
-    data_dict[enabled]['userdata'] = stdout
+    data_dict[enabled]['userdata'] = ret["payload_message"]
 
     # call rcc comms_ssh for metadata retrieval from disabled PodNet
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=disabled,
         payload=read_metadata_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
+    if ret["channel_code"] != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3231] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
-        exit_code = None    # Make sure this is defined
+        message_list.append(messages[3231] + f'channel_code: {ret["channel_code"]}.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
 
-    if (exit_code != SUCCESS_CODE) and (exit_code is not None):
+    if (ret["payload_code"] != SUCCESS_CODE) and (ret["payload_code"] is not None):
         retval = False
-        message_list.append(messages[3232] + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
+        message_list.append(messages[3232] + f'{ret["payload_code"]}.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
 
-    data_dict[enabled]['metadata'] = stdout
+    data_dict[enabled]['metadata'] = ret["payload_message"]
 
     # call rcc comms_ssh for userdata retrieval from disabled PodNet
-    channel_code, channel_error, channel_message, exit_code, stdout, stderr = comms_ssh(
+    ret = comms_ssh(
         host_ip=disabled,
         payload=read_userdata_payload,
         username='robot',
     )
-    if channel_code != CHANNEL_SUCCESS:
+    if ret["channel_code"] != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3233] + f'channel_code: {channel_code}s.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
-        exit_code = None    # Make sure this is defined
+        message_list.append(messages[3233] + f'channel_code: {ret["channel_code"]}.\nchannel_message: {channel_message}\nchannel_error: {channel_error}')
 
-    if (exit_code != SUCCESS_CODE) and (exit_code is not None):
+    if (ret["payload_code"] != SUCCESS_CODE) and (ret["payload_code"] is not None):
         retval = False
-        message_list.append(messages[3234]  + f'{exit_code}s.\nSTDOUT: {stdout}\nSTDERR: {stderr}')
+        message_list.append(messages[3234]  + f'{ret["payload_code"]}.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
 
-    data_dict[enabled]['userdata'] = stdout
+    data_dict[enabled]['userdata'] = ret["payload_message"]
 
     message_list.append(messages[1200])
     return retval, data_dict, message_list
