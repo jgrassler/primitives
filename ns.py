@@ -146,7 +146,7 @@ def build(
         return False, messages[3021] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
 
     create_namespace = True
-    if ret["exit_code"] == SUCCESS_CODE:
+    if ret["payload_code"] == SUCCESS_CODE:
         # No need to create this name space if it exists already
         create_namespace = False
 
@@ -159,8 +159,8 @@ def build(
       )
       if ret["channel_code"] != CHANNEL_SUCCESS:
           return False, messages[3022] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
-      if ret["exit_code"] != SUCCESS_CODE:
-          return False, messages[3023]  + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
+      if ret["payload_code"] != SUCCESS_CODE:
+          return False, messages[3023]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh on enabled PodNet to enable IPv4 forwarding
     ret = comms_ssh(
@@ -170,8 +170,8 @@ def build(
     )
     if ret["channel_code"] != CHANNEL_SUCCESS:
         return False, messages[3024] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
-    if ret["exit_code"] != SUCCESS_CODE:
-        return False, messages[3025]  + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
+    if ret["payload_code"] != SUCCESS_CODE:
+        return False, messages[3025]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh on enabled PodNet to enable IPv6 forwarding
     ret = comms_ssh(
@@ -181,8 +181,8 @@ def build(
     )
     if ret["channel_code"] != CHANNEL_SUCCESS:
         return False, messages[3026] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
-    if ret["exit_code"] != SUCCESS_CODE:
-        return False, messages[3027]  + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
+    if ret["payload_code"] != SUCCESS_CODE:
+        return False, messages[3027]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh on disabled PodNet to find name space
     ret = comms_ssh(
@@ -194,7 +194,7 @@ def build(
         return False, messages[3031] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
 
     create_namespace = True
-    if ret["exit_code"] == SUCCESS_CODE:
+    if ret["payload_code"] == SUCCESS_CODE:
         # No need to create this name space if it exists already
         create_namespace = False
 
@@ -207,8 +207,8 @@ def build(
       )
       if ret["channel_code"] != CHANNEL_SUCCESS:
           return False, messages[3032] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
-      if ret["exit_code"] != SUCCESS_CODE:
-          return False, messages[3033]  + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
+      if ret["payload_code"] != SUCCESS_CODE:
+          return False, messages[3033]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh on disabled PodNet to enable IPv4 forwarding
     ret = comms_ssh(
@@ -218,8 +218,8 @@ def build(
     )
     if ret["channel_code"] != CHANNEL_SUCCESS:
         return False, messages[3034] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
-    if ret["exit_code"] != SUCCESS_CODE:
-        return False, messages[3035]  + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
+    if ret["payload_code"] != SUCCESS_CODE:
+        return False, messages[3035]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh on disabled PodNet to enable IPv6 forwarding
     ret = comms_ssh(
@@ -229,8 +229,8 @@ def build(
     )
     if ret["channel_code"] != CHANNEL_SUCCESS:
         return False, messages[3036] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
-    if ret["exit_code"] != SUCCESS_CODE:
-        return False, messages[3037]  + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
+    if ret["payload_code"] != SUCCESS_CODE:
+        return False, messages[3037]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     return True, messages[1000]
 
@@ -341,7 +341,7 @@ def scrub(
         return False, messages[3121] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
 
     delete_namespace = False
-    if ret["exit_code"] == SUCCESS_CODE:
+    if ret["payload_code"] == SUCCESS_CODE:
         # No need to delete this name space if it exists already
         delete_namespace = True
 
@@ -354,8 +354,8 @@ def scrub(
       )
       if ret["channel_code"] != CHANNEL_SUCCESS:
           return False, messages[3122] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
-      if ret["exit_code"] != SUCCESS_CODE:
-          return False, messages[3123]  + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
+      if ret["payload_code"] != SUCCESS_CODE:
+          return False, messages[3123]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     # call rcc comms_ssh on disabled PodNet
     ret = comms_ssh(
@@ -367,8 +367,8 @@ def scrub(
         return False, messages[3131] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
 
     delete_namespace = False
-    if ret["exit_code"] == SUCCESS_CODE:
-        # No need to delete this name space if it exists already
+    if ret["payload_code"] == SUCCESS_CODE:
+        # Only delete this name space if it exists
         delete_namespace = True
 
     if delete_namespace:
@@ -380,8 +380,8 @@ def scrub(
       )
       if ret["channel_code"] != CHANNEL_SUCCESS:
           return False, messages[3132] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
-      if ret["exit_code"] != SUCCESS_CODE:
-          return False, messages[3133]  + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
+      if ret["payload_code"] != SUCCESS_CODE:
+          return False, messages[3133]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
     return True, messages[1000]
 
@@ -555,9 +555,9 @@ def read(
         retval = False
         message_list.append(messages[3221] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
 
-    if (ret["exit_code"] is not None) and (ret["exit_code"] != SUCCESS_CODE):
+    if (ret["payload_code"] is not None) and (ret["payload_code"] != SUCCESS_CODE):
         retval = False
-        message_list.append(messages[3222] + f'{exit_code}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
+        message_list.append(messages[3222] + f'{payload_code}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
     else:
         data_dict[enabled]['entry'] = ret["payload_message"]
 
@@ -571,9 +571,9 @@ def read(
         retval = False
         message_list.append(messages[3223] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
 
-    if (ret["exit_code"] is not None) and (ret["exit_code"] != SUCCESS_CODE):
+    if (ret["payload_code"] is not None) and (ret["payload_code"] != SUCCESS_CODE):
         retval = False
-        message_list.append(messages[3224] + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
+        message_list.append(messages[3224] + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
     else:
         if ret["payload_message"] != '1':
             retval = False
@@ -590,9 +590,9 @@ def read(
         retval = False
         message_list.append(messages[3226] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
 
-    if (ret["exit_code"] is not None) and (ret["exit_code"] != SUCCESS_CODE):
+    if (ret["payload_code"] is not None) and (ret["payload_code"] != SUCCESS_CODE):
         retval = False
-        message_list.append(messages[3227] + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
+        message_list.append(messages[3227] + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
     else:
         if ret["payload_message"] != '1':
             retval = False
@@ -609,9 +609,9 @@ def read(
         retval = False
         message_list.append(messages[3231] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
 
-    if (ret["exit_code"] is not None) and (ret["exit_code"] != SUCCESS_CODE):
+    if (ret["payload_code"] is not None) and (ret["payload_code"] != SUCCESS_CODE):
         retval = False
-        message_list.append(messages[3232] + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
+        message_list.append(messages[3232] + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
     else:
         data_dict[disabled]['entry'] = ret["payload_message"]
 
@@ -625,9 +625,9 @@ def read(
         retval = False
         message_list.append(messages[3233] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
 
-    if (ret["exit_code"] is not None) and (ret["exit_code"] != SUCCESS_CODE):
+    if (ret["payload_code"] is not None) and (ret["payload_code"] != SUCCESS_CODE):
         retval = False
-        message_list.append(messages[3234] + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
+        message_list.append(messages[3234] + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
     else:
         if ret["payload_message"] != '1':
             retval = False
@@ -644,9 +644,9 @@ def read(
         retval = False
         message_list.append(messages[3236] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
 
-    if (ret["exit_code"] is not None) and (ret["exit_code"] != SUCCESS_CODE):
+    if (ret["payload_code"] is not None) and (ret["payload_code"] != SUCCESS_CODE):
         retval = False
-        message_list.append(messages[3237] + f'{ret["exit_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
+        message_list.append(messages[3237] + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}')
     else:
         if ret["payload_message"] != '1':
             retval = False
