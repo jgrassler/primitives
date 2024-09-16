@@ -83,19 +83,19 @@ def build(
         3035: f'3035: Failed to run create_lo1_address_payload on the enabled PodNet from the config file {config_file}. Payload exited with status ',
         3036: f'3036: Failed to connect to the enabled PodNet from the config file {config_file} for enable_lo1_payload: ',
         3037: f'3037: Failed to run enable_lo1_payload on the enabled PodNet from the config file {config_file}. Payload exited with status ',
-        3051: f'3051: Successfully created name space {namespace} on enabled PodNet but failed to connect to the disabled PodNet '
+        3051: f'3051: Successfully created name space {name} on enabled PodNet but failed to connect to the disabled PodNet '
               f'from the config file {config_file} for find_namespace_payload: ',
-        3052: f'3052: Successfully created name space {namespace} on enabled PodNet but failed to connect to the disabled PodNet '
+        3052: f'3052: Successfully created name space {name} on enabled PodNet but failed to connect to the disabled PodNet '
               f'from the config file {config_file} for create_namespace_payload: ',
-        3053: f'3053: Successfully created name space {namespace} on enabled PodNet but failed to create on the disabled PodNet. '
+        3053: f'3053: Successfully created name space {name} on enabled PodNet but failed to create on the disabled PodNet. '
                'Payload exited with status ',
-        3054: f'3054: Successfully created name space {namespace} on both PodNet nodes but failed to connect to the disabled PodNet '
+        3054: f'3034: Successfully created name space {name} on both PodNet nodes but failed to connect to the disabled PodNet '
               f'from the config file {config_file} for enable_forwardv4_payload: ',
-        3055: f'3055: Successfully created name space {namespace} on both PodNet nodes but failed to run enable_forwardv4_payload on '
+        3055: f'3055: Successfully created name space {name} on both PodNet nodes but failed to run enable_forwardv4_payload on '
               f'disabled PodNet. Payload exited with status ',
-        3056: f'3056: Successfully created name space {namespace} and enabled IPv4 forwarding on both PodNet nodes but failed to '
+        3056: f'3056: Successfully created name space {name} and enabled IPv4 forwarding on both PodNet nodes but failed to '
               f'connect to the disabled PodNet from the config file {config_file} for enable_forwardv6_payload: ',
-        3057: f'3057: Successfully created name space {namespace} both PodNet nodes but failed to run enable_forwardv6_payload on '
+        3057: f'3057: Successfully created name space {name} both PodNet nodes but failed to run enable_forwardv6_payload on '
               f'disabled PodNet. Payload exited with status ',
         3058: f'3058: Failed to connect to the disabled PodNet from the config file {config_file} for enable_lo_payload: ',
         3059: f'3059: Failed to run enable_lo_payload on the disabled PodNet from the config file {config_file}. Payload exited with status ',
@@ -177,7 +177,7 @@ def build(
         username='robot',
     )
     if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3021] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+        return False, messages[3021] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}'
 
     create_namespace = True
     if ret["payload_code"] == SUCCESS_CODE:
@@ -192,7 +192,7 @@ def build(
           username='robot',
       )
       if ret["channel_code"] != CHANNEL_SUCCESS:
-          return False, messages[3022] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+          return False, messages[3022] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}'
       if ret["payload_code"] != SUCCESS_CODE:
           return False, messages[3023]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
@@ -203,7 +203,7 @@ def build(
         username='robot',
     )
     if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3024] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+        return False, messages[3024] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}'
     if ret["payload_code"] != SUCCESS_CODE:
         return False, messages[3025]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
@@ -214,7 +214,7 @@ def build(
         username='robot',
     )
     if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3026] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+        return False, messages[3026] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}'
     if ret["payload_code"] != SUCCESS_CODE:
         return False, messages[3027]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
@@ -303,7 +303,7 @@ def build(
         username='robot',
     )
     if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3051] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+        return False, messages[3051] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}'
 
     create_namespace = True
     if ret["payload_code"] == SUCCESS_CODE:
@@ -318,7 +318,7 @@ def build(
           username='robot',
       )
       if ret["channel_code"] != CHANNEL_SUCCESS:
-          return False, messages[3052] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+          return False, messages[3052] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}'
       if ret["payload_code"] != SUCCESS_CODE:
           return False, messages[3053]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
@@ -329,7 +329,7 @@ def build(
         username='robot',
     )
     if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3054] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+        return False, messages[3054] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}'
     if ret["payload_code"] != SUCCESS_CODE:
         return False, messages[3055]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
@@ -340,7 +340,7 @@ def build(
         username='robot',
     )
     if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3056] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+        return False, messages[3056] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}'
     if ret["payload_code"] != SUCCESS_CODE:
         return False, messages[3057]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
@@ -424,7 +424,7 @@ def build(
 def scrub(
         name: str,
         lo_addr='169.254.169.254',
-        config_file = None,
+        config_file=None,
 ) -> Tuple[bool, str]:
     """
     description:
@@ -466,11 +466,11 @@ def scrub(
         3121: f'3121: Failed to connect to the enabled PodNet from the config file {config_file} for find_namespace_payload: ',
         3122: f'3122: Failed to connect to the enabled PodNet from the config file {config_file} for delete_namespace_payload: ',
         3123: f'3123: Failed to delete name space {name} on the enabled PodNet. Payload exited with status ',
-        3131: f'3131: Successfully deleted name space {namespace} on enabled PodNet but failed to connect to the disabled PodNet '
+        3131: f'3131: Successfully deleted name space {name} on enabled PodNet but failed to connect to the disabled PodNet '
               f'from the config file {config_file} for find_namespace_payload: ',
-        3132: f'3132: Successfully deleted name space {namespace} on enabled PodNet but failed to connect to the disabled PodNet '
+        3132: f'3132: Successfully deleted name space {name} on enabled PodNet but failed to connect to the disabled PodNet '
               f'from the config file {config_file} for delete_namespace_payload: ',
-        3133: f'3133: Successfully deleted name space {namespace} on enabled PodNet but failed to delete on the disabled PodNet. '
+        3133: f'3133: Successfully deleted name space {name} on enabled PodNet but failed to delete on the disabled PodNet. '
                'Payload exited with status ',
     }
 
@@ -533,7 +533,7 @@ def scrub(
         username='robot',
     )
     if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3121] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+        return False, messages[3121] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}'
 
     delete_namespace = False
     if ret["payload_code"] == SUCCESS_CODE:
@@ -548,7 +548,7 @@ def scrub(
           username='robot',
       )
       if ret["channel_code"] != CHANNEL_SUCCESS:
-          return False, messages[3122] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+          return False, messages[3122] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}'
       if ret["payload_code"] != SUCCESS_CODE:
           return False, messages[3123]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
@@ -559,7 +559,7 @@ def scrub(
         username='robot',
     )
     if channel_code != CHANNEL_SUCCESS:
-        return False, messages[3131] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+        return False, messages[3131] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}'
 
     delete_namespace = False
     if ret["payload_code"] == SUCCESS_CODE:
@@ -574,7 +574,7 @@ def scrub(
           username='robot',
       )
       if ret["channel_code"] != CHANNEL_SUCCESS:
-          return False, messages[3132] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+          return False, messages[3132] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}'
       if ret["payload_code"] != SUCCESS_CODE:
           return False, messages[3133]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
 
@@ -584,7 +584,7 @@ def scrub(
 def read(
         name: str,
         lo_addr='169.254.169.254',
-        config_file = None,
+        config_file=None,
 ) -> Tuple[bool, dict, str]:
     """
     description:
@@ -753,7 +753,7 @@ def read(
 
     if ret["channel_code"] != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3221] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
+        message_list.append(messages[3221] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}')
 
     if (ret["payload_code"] is not None) and (ret["payload_code"] != SUCCESS_CODE):
         retval = False
@@ -769,7 +769,7 @@ def read(
     )
     if ret["channel_code"] != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3223] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
+        message_list.append(messages[3223] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}')
 
     if (ret["payload_code"] is not None) and (ret["payload_code"] != SUCCESS_CODE):
         retval = False
@@ -788,7 +788,7 @@ def read(
     )
     if ret["channel_code"] != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3226] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
+        message_list.append(messages[3226] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}')
 
     if (ret["payload_code"] is not None) and (ret["payload_code"] != SUCCESS_CODE):
         retval = False
@@ -807,7 +807,7 @@ def read(
     )
     if ret["channel_code"] != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3231] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
+        message_list.append(messages[3231] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}')
 
     if (ret["payload_code"] is not None) and (ret["payload_code"] != SUCCESS_CODE):
         retval = False
@@ -823,7 +823,7 @@ def read(
     )
     if ret["channel_code"] != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3233] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
+        message_list.append(messages[3233] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}')
 
     if (ret["payload_code"] is not None) and (ret["payload_code"] != SUCCESS_CODE):
         retval = False
@@ -842,7 +842,7 @@ def read(
     )
     if ret["channel_code"] != CHANNEL_SUCCESS:
         retval = False
-        message_list.append(messages[3236] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}')
+        message_list.append(messages[3236] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}')
 
     if (ret["payload_code"] is not None) and (ret["payload_code"] != SUCCESS_CODE):
         retval = False
