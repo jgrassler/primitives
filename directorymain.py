@@ -143,7 +143,7 @@ def build(path: str, config_file=None) -> Tuple[bool, str]:
     return True, messages[1000]
 
 
-def read(path: str, config_file=None) -> -> Tuple[bool, Dict[str, Any], List[str]]:
+def read(path: str, config_file=None) -> Tuple[bool, Dict[str, Any], List[str]]:
     """
     description:
         Gets the status of the directory on PodNet HA.
