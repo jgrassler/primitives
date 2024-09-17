@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Tuple
 # lib
 from cloudcix.rcc import comms_ssh, CHANNEL_SUCCESS, VALIDATION_ERROR, CONNECTION_ERROR
-from utils import load_pod_config
+from utils import load_pod_config, CommsWrapper, ErrorFormatter
 # local
 
 
@@ -53,52 +53,52 @@ def build(
         type: tuple
     """
 
+    # Default config_file if it is None
+    if config_file is None:
+        config_file = '/opt/robot/config.json'
+
     # Define messages
 
     messages = {
+        # Enabled Podnet
         1000: f'1000: Successfully created network name space {name} on both PodNet nodes.',
         1001: f'1001: Success: name space {name} exists already',
-        3021: f'3021: Failed to connect to the enabled PodNet from the config file {config_file} for find_namespace_payload: ',
-        3022: f'3022: Failed to connect to the enabled PodNet from the config file {config_file} for create_namespace_payload: ',
-        3023: f'3023: Failed to create name space {name} on the enabled PodNet. Payload exited with status ',
-        3024: f'3024: Failed to run enable_forwardv4_payload in name space {name} on the enabled PodNet. Payload exited with status ',
-        3025: f'3025: Failed to connect to the enabled PodNet from the config file {config_file} for enable_forwardv4_payload: ',
-        3026: f'3026: Failed to create name space {name} on the enabled PodNet. Payload exited with status ',
-        3027: f'3027: Failed to create name space {name} on the enabled PodNet. Payload exited with status ',
-        3028: f'3028: Failed to connect to the enabled PodNet from the config file {config_file} for enable_lo_payload: ',
-        3029: f'3029: Failed to run enable_lo_payload on the enabled PodNet from the config file {config_file}. Payload exited with status ',
-        3030: f'3030: Failed to connect to the enabled PodNet from the config file {config_file} for find_lo1_payload: ',
-        3031: f'3031: Failed to connect to the enabled PodNet from the config file {config_file} for create_lo1_payload: ',
-        3032: f'3032: Failed to run create_lo1_payload on the enabled PodNet from the config file {config_file}. Payload exited with status ',
-        3033: f'3033: Failed to connect to the enabled PodNet from the config file {config_file} for find_lo1_payload: ',
-        3034: f'3034: Failed to connect to the enabled PodNet from the config file {config_file} for create_lo1_address_payload: ',
-        3035: f'3035: Failed to run create_lo1_address_payload on the enabled PodNet from the config file {config_file}. Payload exited with status ',
-        3036: f'3036: Failed to connect to the enabled PodNet from the config file {config_file} for enable_lo1_payload: ',
-        3037: f'3037: Failed to run enable_lo1_payload on the enabled PodNet from the config file {config_file}. Payload exited with status ',
-        3051: f'3051: Successfully created name space {name} on enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file} for find_namespace_payload: ',
-        3052: f'3052: Successfully created name space {name} on enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file} for create_namespace_payload: ',
-        3053: f'3053: Successfully created name space {name} on enabled PodNet but failed to create on the disabled PodNet. '
-               'Payload exited with status ',
-        3054: f'3034: Successfully created name space {name} on both PodNet nodes but failed to connect to the disabled PodNet '
-              f'from the config file {config_file} for enable_forwardv4_payload: ',
-        3055: f'3055: Successfully created name space {name} on both PodNet nodes but failed to run enable_forwardv4_payload on '
-              f'disabled PodNet. Payload exited with status ',
-        3056: f'3056: Successfully created name space {name} and enabled IPv4 forwarding on both PodNet nodes but failed to '
-              f'connect to the disabled PodNet from the config file {config_file} for enable_forwardv6_payload: ',
-        3057: f'3057: Successfully created name space {name} both PodNet nodes but failed to run enable_forwardv6_payload on '
-              f'disabled PodNet. Payload exited with status ',
-        3058: f'3058: Failed to connect to the disabled PodNet from the config file {config_file} for enable_lo_payload: ',
-        3059: f'3059: Failed to run enable_lo_payload on the disabled PodNet from the config file {config_file}. Payload exited with status ',
-        3060: f'3060: Failed to connect to the disabled PodNet from the config file {config_file} for find_lo1_payload: ',
-        3061: f'3061: Failed to connect to the disabled PodNet from the config file {config_file} for create_lo1_payload: ',
-        3062: f'3062: Failed to run create_lo1_payload on the disabled PodNet from the config file {config_file}. Payload exited with status ',
-        3063: f'3063: Failed to connect to the disabled PodNet from the config file {config_file} for find_lo1_payload: ',
-        3064: f'3064: Failed to connect to the disabled PodNet from the config file {config_file} for create_lo1_address_payload: ',
-        3065: f'3065: Failed to run create_lo1_address_payload on the disabled PodNet from the config file {config_file}. Payload exited with status ',
-        3066: f'3066: Failed to connect to the disabled PodNet from the config file {config_file} for enable_lo1_payload: ',
-        3067: f'3067: Failed to run enable_lo1_payload on the disabled PodNet from the config file {config_file}. Payload exited with status ',
+        3021: f'3021: Failed to connect to the enabled PodNet from the config file {config_file} for find_namespace payload: ',
+        3022: f'3022: Failed to connect to the enabled PodNet from the config file {config_file} for create_namespace payload: ',
+        3023: f'3023: Failed to run create_namespace pyaload on the enabled PodNet. Payload exited with status ',
+        3024: f'3024: Failed to run enable_forwardv4 payload in name space {name} on the enabled PodNet. Payload exited with status ',
+        3025: f'3025: Failed to run enable_forwardv4 payload on enabled PodNet. Payload exited with status ',
+        3026: f'3026: Failed to connect to the enabled PodNet from the config file {config_file} for enable_forwardv6 payload: ',
+        3027: f'3027: Failed to run enable_forwardv6 payload on the enabled PodNet. Payload exited with status ',
+        3028: f'3028: Failed to connect to the enabled PodNet from the config file {config_file} for enable_lo payload: ',
+        3029: f'3029: Failed to run enable_lo payload on the enabled PodNet from the config file {config_file}. Payload exited with status ',
+        3030: f'3030: Failed to connect to the enabled PodNet from the config file {config_file} for find_lo1 payload: ',
+        3031: f'3031: Failed to connect to the enabled PodNet from the config file {config_file} for create_lo1 payload: ',
+        3032: f'3032: Failed to run create_lo1 payload on the enabled PodNet from the config file {config_file}. Payload exited with status ',
+        3033: f'3033: Failed to connect to the enabled PodNet from the config file {config_file} for find_lo1 payload: ',
+        3034: f'3034: Failed to connect to the enabled PodNet from the config file {config_file} for create_lo1_address payload: ',
+        3035: f'3035: Failed to run create_lo1_address payload on the enabled PodNet from the config file {config_file}. Payload exited with status ',
+        3036: f'3036: Failed to connect to the enabled PodNet from the config file {config_file} for enable_lo1 payload: ',
+        3037: f'3037: Failed to run enable_lo1 payload on the enabled PodNet from the config file {config_file}. Payload exited with status ',
+
+        # Disabled Podnet
+        3051: f'3051: Failed to connect to the disabled PodNet from the config file {config_file} for find_namespace payload: ',
+        3052: f'3052: Failed to connect to the disabled PodNet from the config file {config_file} for create_namespace payload: ',
+        3053: f'3053: Failed to run create_namespace payload on the disabled PodNet. Payload exited with status ',
+        3054: f'3034: Failed to connect to the disabled PodNet from the config file {config_file} for enable_forwardv4 payload: ',
+        3055: f'3055: Failed to run enable_forwardv4 payload on disabled PodNet. Payload exited with status ',
+        3056: f'3056: Failed to connect to the disabled PodNet from the config file {config_file} for enable_forwardv6 payload: ',
+        3057: f'3057: Failed to run enable_forwardv6 payload on disabled PodNet. Payload exited with status ',
+        3058: f'3058: Failed to connect to the disabled PodNet from the config file {config_file} for enable_lo payload: ',
+        3059: f'3059: Failed to run enable_lo payload on the disabled PodNet from the config file {config_file}. Payload exited with status ',
+        3060: f'3060: Failed to connect to the disabled PodNet from the config file {config_file} for find_lo1 payload: ',
+        3061: f'3061: Failed to connect to the disabled PodNet from the config file {config_file} for create_lo1 payload: ',
+        3062: f'3062: Failed to run create_lo1 payload on the disabled PodNet from the config file {config_file}. Payload exited with status ',
+        3063: f'3063: Failed to connect to the disabled PodNet from the config file {config_file} for find_lo1 payload: ',
+        3064: f'3064: Failed to connect to the disabled PodNet from the config file {config_file} for create_lo1_address payload: ',
+        3065: f'3065: Failed to run create_lo1_address payload on the disabled PodNet from the config file {config_file}. Payload exited with status ',
+        3066: f'3066: Failed to connect to the disabled PodNet from the config file {config_file} for enable_lo1 payload: ',
+        3067: f'3067: Failed to run enable_lo1 payload on the disabled PodNet from the config file {config_file}. Payload exited with status ',
     }
 
     status, config_data, msg = load_pod_config(config_file)
@@ -115,267 +115,123 @@ def build(
     name_grepsafe = name.replace('.', '\.')
     lo_addr_grepsafe = lo_addr.replace('.', '\.')
 
-    # define payloads
-    find_namespace_payload = "ip netns list | grep -w '{name_grepsafe}'"
-    create_namespace_payload = "ip netns create {name}"
-    enable_forwardv4_payload = "ip netns exec {name} sysctl --write net.ipv4.ip_forward=1"
-    enable_forwardv6_payload = "ip netns exec {name} sysctl --write net.ipv6.conf.all.forwarding=1"
-    enable_lo_payload = "ip netns exec {name} ip link set dev lo up"
-    find_lo1_payload = "ip netns exec {name} ip link show lo1"
-    add_lo1_payload = "ip netns exec {name} ip link add lo1 type dummy"
-    find_lo1_address_payload = "ip netns exec {name} show dev lo1 | grep -w '{lo_addr_grepsafe}'"
-    create_lo1_address_payload = "ip netns exec {name} ip addr add {lo_addr} dev lo1"
-    enable_lo1_payload = "ip netns exec {name} ip link set dev lo1 up"
-
-    # call rcc comms_ssh on enabled PodNet to find name space
-    ret = comms_ssh(
-        host_ip=enabled,
-        payload=find_namespace_payload,
-        username='robot',
-    )
-    if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3021] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}'
-
-    create_namespace = True
-    if ret["payload_code"] == SUCCESS_CODE:
-        # No need to create this name space if it exists already
-        create_namespace = False
-
-    if create_namespace:
-      # call rcc comms_ssh on enabled PodNet
-      ret = comms_ssh(
-          host_ip=enabled,
-          payload=create_namespace_payload,
-          username='robot',
-      )
-      if ret["channel_code"] != CHANNEL_SUCCESS:
-          return False, messages[3022] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}'
-      if ret["payload_code"] != SUCCESS_CODE:
-          return False, messages[3023]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
-
-    # call rcc comms_ssh on enabled PodNet to enable IPv4 forwarding
-    ret = comms_ssh(
-        host_ip=enabled,
-        payload=enable_forwardv4_payload,
-        username='robot',
-    )
-    if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3024] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}'
-    if ret["payload_code"] != SUCCESS_CODE:
-        return False, messages[3025]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
-
-    # call rcc comms_ssh on enabled PodNet to enable IPv6 forwarding
-    ret = comms_ssh(
-        host_ip=enabled,
-        payload=enable_forwardv6_payload,
-        username='robot',
-    )
-    if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3026] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}'
-    if ret["payload_code"] != SUCCESS_CODE:
-        return False, messages[3027]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
-
-    # call rcc comms_ssh on enabled PodNet to enable lo (no need to check - bringing an interface up is idempotent)
-    ret = comms_ssh(
-        host_ip=enabled,
-        payload=enable_lo_payload,
-        username='robot',
-    )
-    if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3028] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
-    if ret["payload_code"] != SUCCESS_CODE:
-        return False, messages[3029]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
-
-    # call rcc comms_ssh on enabled PodNet to check for lo1
-    ret = comms_ssh(
-        host_ip=enabled,
-        payload=find_lo1_payload,
-        username='robot',
-    )
-    if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3030] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
-
-    create_lo1 = True
-    if ret["payload_code"] != SUCCESS_CODE:
-        # No need to create lo1 if it exists already
-        create_lo1 = False
-
-    if create_lo1:
-      # call rcc comms_ssh on enabled PodNet
-      ret = comms_ssh(
-          host_ip=enabled,
-          payload=create_lo1_payload,
-          username='robot',
-      )
-      if ret["channel_code"] != CHANNEL_SUCCESS:
-          return False, messages[3031] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
-      if ret["payload_code"] != SUCCESS_CODE:
-          return False, messages[3032]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
-
-    # call rcc comms_ssh on enabled PodNet to check for lo1
-    ret = comms_ssh(
-        host_ip=enabled,
-        payload=find_lo1_address_payload,
-        username='robot',
-    )
-    if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3033] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
-
-    create_lo1_address = True
-    if ret["payload_code"] != SUCCESS_CODE:
-        # No need to assign this address name space if it has been assigned already
-        create_lo1_address = False
-
-    if create_lo1_address:
-        # call rcc comms_ssh on enabled PodNet
-        ret = comms_ssh(
-            host_ip=enabled,
-            payload=create_lo1_address_payload,
-            username='robot',
+    def run_podnet(podnet_node, prefix, successful_payloads):
+        rcc = CommsWrapper(comms_ssh, podnet_node, 'robot')
+        fmt = ErrorFormatter(
+            messages,
+            podnet_node,
+            podnet_node == enabled,
+            prefix,
+            {'payload_message': 'STDOUT', 'payload_error': 'STDERR'}
         )
+
+        payloads = {
+            'find_namespace':     "ip netns list | grep -w '{name_grepsafe}'",
+            'create_namespace':   "ip netns create {name}",
+            'enable_forwardv4':   "ip netns exec {name} sysctl --write net.ipv4.ip_forward=1",
+            'enable_forwardv6':   "ip netns exec {name} sysctl --write net.ipv6.conf.all.forwarding=1",
+            'enable_lo':          "ip netns exec {name} ip link set dev lo up",
+            'find_lo1':           "ip netns exec {name} ip link show lo1",
+            'add_lo1':            "ip netns exec {name} ip link add lo1 type dummy",
+            'find_lo1_address':   "ip netns exec {name} show dev lo1 | grep -w '{lo_addr_grepsafe}'",
+            'create_lo1_address': "ip netns exec {name} ip addr add {lo_addr} dev lo1",
+            'enable_lo1':         "ip netns exec {name} ip link set dev lo1 up",
+        }
+
+        ret = rcc.run(payloads['find_namespace'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
-            return False, messages[3034] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
-        if ret["payload_code"] != SUCCESS_CODE:
-            return False, messages[3035]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
+            return False, fmt.channel_error(ret, prefix+1)
+        create_namespace = True
+        if ret["payload_code"] == SUCCESS_CODE:
+            # No need to create this name space if it exists already
+            create_namespace = False
+        fmt.add_successful('find_namespace')
 
-    # call rcc comms_ssh on enabled PodNet to enable lo1 (no need to check - bringing an interface up is idempotent)
-    ret = comms_ssh(
-        host_ip=enabled,
-        payload=enable_lo1_payload,
-        username='robot',
-    )
-    if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3036] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
-    if ret["payload_code"] != SUCCESS_CODE:
-        return False, messages[3037]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
+        if create_namespace:
+            # call rcc comms_ssh on enabled PodNet
+            ret = rcc.run(payloads['create_namespace'])
 
+            if ret["channel_code"] != CHANNEL_SUCCESS:
+                return False, fmt.channel_error(ret, messages[prefix+2])
+            if ret["payload_code"] != SUCCESS_CODE:
+                return False, fmt.payload_error(messages[prefix+3])
+            fmt.add_successful('create_namespace')
 
-    ############################################################## Disabled PodNet ##############################################################
-
-
-    # call rcc comms_ssh on disabled PodNet to find name space
-    ret = comms_ssh(
-        host_ip=disabled,
-        payload=find_namespace_payload,
-        username='robot',
-    )
-    if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3051] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}'
-
-    create_namespace = True
-    if ret["payload_code"] == SUCCESS_CODE:
-        # No need to create this name space if it exists already
-        create_namespace = False
-
-    if create_namespace:
-      # call rcc comms_ssh on disabled PodNet to create name space
-      ret = comms_ssh(
-          host_ip=disabled,
-          payload=create_namespace_payload,
-          username='robot',
-      )
-      if ret["channel_code"] != CHANNEL_SUCCESS:
-          return False, messages[3052] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}'
-      if ret["payload_code"] != SUCCESS_CODE:
-          return False, messages[3053]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
-
-    # call rcc comms_ssh on disabled PodNet to enable IPv4 forwarding
-    ret = comms_ssh(
-        host_ip=disabled,
-        payload=enable_forwardv4_payload,
-        username='robot',
-    )
-    if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3054] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}'
-    if ret["payload_code"] != SUCCESS_CODE:
-        return False, messages[3055]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
-
-    # call rcc comms_ssh on disabled PodNet to enable IPv6 forwarding
-    ret = comms_ssh(
-        host_ip=disabled,
-        payload=enable_forwardv6_payload,
-        username='robot',
-    )
-    if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3056] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {ret["channel_message"]}\nchannel_error: {ret["channel_error"]}'
-    if ret["payload_code"] != SUCCESS_CODE:
-        return False, messages[3057]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
-
-    # call rcc comms_ssh on disabled PodNet to enable lo (no need to check - bringing an interface up is idempotent)
-    ret = comms_ssh(
-        host_ip=disabled,
-        payload=enable_lo_payload,
-        username='robot',
-    )
-    if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3058] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
-    if ret["payload_code"] != SUCCESS_CODE:
-        return False, messages[3059]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
-
-    # call rcc comms_ssh on disabled PodNet to check for lo1
-    ret = comms_ssh(
-        host_ip=disabled,
-        payload=find_lo1_payload,
-        username='robot',
-    )
-    if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3060] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
-
-    create_lo1 = True
-    if ret["payload_code"] != SUCCESS_CODE:
-        # No need to create lo1 if it exists already
-        create_lo1 = False
-
-    if create_lo1:
-      # call rcc comms_ssh on disabled PodNet
-      ret = comms_ssh(
-          host_ip=disabled,
-          payload=create_lo1_payload,
-          username='robot',
-      )
-      if ret["channel_code"] != CHANNEL_SUCCESS:
-          return False, messages[3061] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
-      if ret["payload_code"] != SUCCESS_CODE:
-          return False, messages[3062]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
-
-    # call rcc comms_ssh on disabled PodNet to check for lo1
-    ret = comms_ssh(
-        host_ip=disabled,
-        payload=find_lo1_address_payload ,
-        username='robot',
-    )
-    if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3063] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
-
-    create_lo1_address = True
-    if ret["payload_code"] != SUCCESS_CODE:
-        # No need to assign this address name space if it has been assigned already
-        create_lo1_address = False
-
-    if create_lo1_address:
-        # call rcc comms_ssh on disabled PodNet
-        ret = comms_ssh(
-            host_ip=disabled,
-            payload=create_lo1_address_payload,
-            username='robot',
-        )
+        ret = rcc.run(payloads['enable_forwardv4'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
-            return False, messages[3064] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
+            return False, fmt.channel_error(ret, messages[prefix+4])
         if ret["payload_code"] != SUCCESS_CODE:
-            return False, messages[3065]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
+            return False, fmt.payload_error(messages[prefix+5])
+        fmt.add_successful('enable_forwardv4')
 
-    # call rcc comms_ssh on disabled PodNet to enable lo1 (no need to check - bringing an interface up is idempotent)
-    ret = comms_ssh(
-        host_ip=disabled,
-        payload=enable_lo1_payload,
-        username='robot',
-    )
-    if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3066] + f'channel_code: {ret["channel_code"]}s.\nchannel_message: {channel_message}\nchannel_error: {ret["channel_error"]}'
-    if ret["payload_code"] != SUCCESS_CODE:
-        return False, messages[3067]  + f'{ret["payload_code"]}s.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
+        ret = rcc.run(payloads['enable_forwardv6'])
+        if ret["channel_code"] != CHANNEL_SUCCESS:
+            return False, fmt.channel_error(ret, messages[prefix+6])
+        if ret["payload_code"] != SUCCESS_CODE:
+            return False, fmt.payload_error(messages[prefix+7])
+        fmt.add_successful('enable_forwardv6')
+
+        ret = rcc.run(payloads['enable_lo'])
+        if ret["channel_code"] != CHANNEL_SUCCESS:
+            return False, fmt.channel_error(ret, messages[prefix+8])
+        if ret["payload_code"] != SUCCESS_CODE:
+            return False, fmt.payload_error(messages[prefix+9])
+        fmt.add_successful('enable_lo')
+
+        ret = rcc.run(payloads['find_lo1'])
+        if ret["channel_code"] != CHANNEL_SUCCESS:
+            return False, fmt.channel_error(ret, messages[prefix+10])
+        create_lo1 = True
+        if ret["payload_code"] != SUCCESS_CODE:
+            # No need to create lo1 if it exists already
+            create_lo1 = False
+        fmt.add_successful('find_lo1')
+
+        if create_lo1:
+            ret = rcc.run(payloads['create_lo1'])
+            if ret["channel_code"] != CHANNEL_SUCCESS:
+                return False, fmt.channel_error(ret, messages[prefix+11])
+            if ret["payload_code"] != SUCCESS_CODE:
+                return False, fmt.payload_error(messages[prefix+12])
+        fmt.add_successful('create_lo1')
+
+        ret = rcc.run(payloads['find_lo1_address'])
+        if ret["channel_code"] != CHANNEL_SUCCESS:
+            return False, fmt.channel_error(ret, messages[prefix+13])
+        create_lo1_address = True
+        if ret["payload_code"] != SUCCESS_CODE:
+            # No need to assign this address to lo1 if it has been assigned already
+            create_lo1_address = False
+        fmt.add_successful('find_lo1_address')
+
+        if create_lo1_address:
+            ret = rcc.run(payloads['create_lo1_address'])
+            if ret["channel_code"] != CHANNEL_SUCCESS:
+                return False, fmt.channel_error(ret, messages[prefix+14])
+            if ret["payload_code"] != SUCCESS_CODE:
+                return False, fmt.payload_error(messages[prefix+15])
+            fmt.add_successful('create_lo1_address')
+
+        ret = rcc.run(payloads['enable_lo1'])
+        if ret["channel_code"] != CHANNEL_SUCCESS:
+            return False, fmt.channel_error(ret, messages[prefix+16])
+        if ret["payload_code"] != SUCCESS_CODE:
+            return False, fmt.payload_error(messages[prefix+17])
+        fmt.add_successful('enable_lo1')
+
+        return True, "", successful_payloads
+
+
+    status, msg, successful_payloads = run_podnet(enabled, 3020, {})
+    if status == False:
+        return status, msg
+
+    status, msg = run_podnet(disabled, 3050, successful_payloads)
+    if status == False:
+        return status, msg
 
     return True, messages[1000]
+
 
 
 def scrub(
@@ -406,6 +262,10 @@ def scrub(
             the output or error message.
         type: tuple
     """
+
+    # Default config_file if it is None
+    if config_file is None:
+        config_file = '/opt/robot/config.json'
 
     # Define messages
 
@@ -548,6 +408,10 @@ def read(
                     description: content of net.ipv6.conf.all.forwarding sysctl in network name space
                     type: string
     """
+
+    # Default config_file if it is None
+    if config_file is None:
+        config_file = '/opt/robot/config.json'
 
     # Define messages
 

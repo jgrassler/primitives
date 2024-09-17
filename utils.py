@@ -73,11 +73,6 @@ def load_pod_config(config_file=None, prefix=4000) -> Dict[str, Any]:
       19: 'Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
     }
 
-    # Default config_file if it is None
-    if config_file is None:
-        config_file = '/opt/robot/config.json'
-
-
     config_data = {
       'raw': None,
       'processed': None
@@ -167,3 +162,93 @@ def get_mgmt_ipv6(mgmt):
     if mgmt_ipv6 == '':
         raise InvalidPodNetMgmtIPv6
     return mgmt_ipv6
+
+
+class CommsWrapper:
+    """ Wraps RCC function to remember parameters that do not change over set of invocations"""
+    def __init__(self, comm_function, host_ip, username):
+        self.comm_function = comm_function
+        self.host_ip = host_ip
+        self.username = username
+
+    def run(self, payload):
+        return self.comm_function(
+            host_ip=self.host_ip,
+            payload=payload,
+            username=self.username
+        )
+
+class ErrorFormatter:
+    """Formats error messages and keeps error/success message state if needed"""
+
+    def __init__(config_file, podnet_node, enabled, payload_channels, successful_payloads={}):
+        """
+        Creates a new errorFormatter.
+        :param config_file: Config file the PodNet configuration originates from.
+        :param podnet_node: PodNet node the errors occur on.
+        :param enabled: Boolean status code indicating whether podnet_node is enabled
+        :param payload_channels: dict assigning names to the payload_error and
+                                 payload_message keys returned by RCC. For
+                                 rcc_ssh you might use 
+                                 {'payload_message': 'STDOUT', 'payload_error':
+                                 'STDERR'}, for instance. These names will be
+                                 used by format_payload_error(). and
+                                 store_payload_error().
+        :param successful_payloads: dict keyed by PodNet node (may be empty).
+                                    Each key contains a list of successful
+                                    payload names as created by
+                                    add_successful() this can be used to carry
+                                    over succesful payloads from a different
+                                    instance of this class.
+        """
+        self.config_file = config_file
+        self.podnet_node = podnet_node
+        self.enabled = enabled
+        self.payload_channels = payload_channels
+        self.successful_payloads = successful_payloads
+        self.successful_payloads[self.podnet_node] = ()
+        self.message_list = ()
+
+    def add_successful(self, payload_name):
+        self.successful_payloads[self.podnet_node].append(payload_name)
+
+    def channel_error(self, rcc_return, msg_index):
+        return _format_channel_error(rcc_return, msg_index)
+
+    def payload_error(self, rcc_return, msg_index):
+        return _format_payload_error(rcc_return, msg_index)
+
+    def store_channel_error(self, rcc_return, msg_index):
+        self.message_list.append(_format_channel_error(rcc_return, msg_index))
+
+    def store_payload_error(self, rcc_return, msg_index):
+        self.message_list.append(_format_payload_error(rcc_return, msg_index))
+
+    def _payloads_context(self):
+        context = ('\n')
+        context.append(f'Config file: {self.config_file}')
+        context.append(f'PodNet: {self.podnet_node} (enabled: {self.enabled})')
+        context.append("Successful payloads:")
+        for k in self.successful_payloads.keys().sort():
+            context.append(self.successful_payloads[k])
+        return context.join("\n")
+
+    def _format_channel_error(self, rcc_return, msg):
+        msg = msg + "channel_code: %s\nchannel_message: %s\nchannel_error: %s" % (
+            rcc_return['channel_code'],
+            rcc_return['channel_error'],
+            rcc_return['channel_message']
+        )
+        msg = msg + self._payloads_context()
+        return msg
+
+    def _format_payload_error(self, rcc_return, msg):
+        msg = msg + "channel_code: %s\nchannel_message: %s\nchannel_error: %s" % (
+            rcc_return['payload_code'],
+            self.payload_channels['payload_error'],
+            rcc_return['payload_error'],
+            self.payload_channels['payload_message'],
+            rcc_return['payload_message']
+        )
+        msg = msg + self._payloads_context()
+        return msg
