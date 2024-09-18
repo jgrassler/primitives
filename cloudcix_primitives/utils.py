@@ -211,8 +211,8 @@ class ErrorFormatter:
         self.enabled = enabled
         self.payload_channels = payload_channels
         self.successful_payloads = successful_payloads
-        self.successful_payloads[self.podnet_node] = ()
-        self.message_list = ()
+        self.successful_payloads[self.podnet_node] = list()
+        self.message_list = list()
 
     def add_successful(self, payload_name):
         self.successful_payloads[self.podnet_node].append(payload_name)
@@ -230,7 +230,7 @@ class ErrorFormatter:
         self.message_list.append(_format_payload_error(rcc_return, msg_index))
 
     def _payloads_context(self):
-        context = ('\n')
+        context = list('\n')
         context.append(f'Config file: {self.config_file}')
         context.append(f'PodNet: {self.podnet_node} (enabled: {self.enabled})')
         context.append("Successful payloads:")
