@@ -141,7 +141,7 @@ def build(
         if ret["channel_code"] != CHANNEL_SUCCESS:
             return False, fmt.channel_error(ret, f"{prefix+1}: " + messages[prefix+1]), fmt.successful_payloads
         create_namespace = True
-        if ret["payload_code"] == SUCCESS_CODE:
+        if ret["payload_code"] != SUCCESS_CODE:
             # No need to create this name space if it exists already
             create_namespace = False
         fmt.add_successful('find_namespace')
