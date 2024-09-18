@@ -218,10 +218,10 @@ class ErrorFormatter:
         self.successful_payloads[self.podnet_node].append(payload_name)
 
     def channel_error(self, rcc_return, msg_index):
-        return _format_channel_error(rcc_return, msg_index)
+        return self._format_channel_error(rcc_return, msg_index)
 
     def payload_error(self, rcc_return, msg_index):
-        return _format_payload_error(rcc_return, msg_index)
+        return self._format_payload_error(rcc_return, msg_index)
 
     def store_channel_error(self, rcc_return, msg_index):
         self.message_list.append(_format_channel_error(rcc_return, msg_index))
@@ -230,13 +230,17 @@ class ErrorFormatter:
         self.message_list.append(_format_payload_error(rcc_return, msg_index))
 
     def _payloads_context(self):
-        context = list('\n')
+        context = list("")
         context.append(f'Config file: {self.config_file}')
         context.append(f'PodNet: {self.podnet_node} (enabled: {self.enabled})')
         context.append("Successful payloads:")
-        for k in self.successful_payloads.keys().sort():
-            context.append(self.successful_payloads[k])
-        return context.join("\n")
+        context.append("")
+        for k in sorted(self.successful_payloads.keys()):
+            context.append(f'{k}: ')
+            context.extend(self.successful_payloads[k])
+            context.append("")
+            context.append("")
+        return "\n".join(context)
 
     def _format_channel_error(self, rcc_return, msg):
         msg = msg + "channel_code: %s\nchannel_message: %s\nchannel_error: %s" % (
@@ -248,7 +252,7 @@ class ErrorFormatter:
         return msg
 
     def _format_payload_error(self, rcc_return, msg):
-        msg = msg + "channel_code: %s\nchannel_message: %s\nchannel_error: %s" % (
+        msg = msg + "payload code: %s\n%s: %s\n%s: %s" % (
             rcc_return['payload_code'],
             self.payload_channels['payload_error'],
             rcc_return['payload_error'],
