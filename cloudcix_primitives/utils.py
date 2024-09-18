@@ -61,16 +61,16 @@ def load_pod_config(config_file=None, prefix=4000) -> Dict[str, Any]:
     """
 
     messages = {
-      10: 'Config file {config_file} loaded.',
-      11: 'Failed to open {config_file}: ',
-      12: 'Failed to parse {config_file}: ',
-      13: 'Failed to get `ipv6_subnet from config_file.',
-      14: 'Invalid value for `ipv6_subnet` from config file {config_file}',
-      15: 'Failed to get `podnet_a_enabled` from config file {config_file}',
-      16: 'Failed to get `podnet_b_enabled` from config file {config_file}',
-      17: 'Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are True',
-      18: 'Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
-      19: 'Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
+      4010: 'Config file {config_file} loaded.',
+      4011: 'Failed to open {config_file}: ',
+      4012: 'Failed to parse {config_file}: ',
+      4013: 'Failed to get `ipv6_subnet from config_file.',
+      4014: 'Invalid value for `ipv6_subnet` from config file {config_file}',
+      4015: 'Failed to get `podnet_a_enabled` from config file {config_file}',
+      4016: 'Failed to get `podnet_b_enabled` from config file {config_file}',
+      4017: 'Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are True',
+      4018: 'Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
+      4019: 'Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
     }
 
     config_data = {
@@ -83,16 +83,16 @@ def load_pod_config(config_file=None, prefix=4000) -> Dict[str, Any]:
         with Path(config_file).open('r') as file:
             config['file'] = json.load(file)
     except OSError as e:
-            return False, config_data, messages[prefix + 11] + e.__str__()
+            return False, config_data, ("%d: " % prefix + 11) + messages[prefix + 11] + e.__str__()
     except Exception as e:
-            return False, config_data, messages[prefix + 12] + e.__str__()
+            return False, config_data, ("%d: " % prefix + 12) + messages[prefix + 12] + e.__str__()
 
     config_data['raw'] = config
 
     # Get the ipv6_subnet from config_file
     ipv6_subnet = config.get('ipv6_subnet', None)
     if ipv6_subnet is None:
-        return False, config_data, ("%d: " % prefix + 13) + messages[13]
+        return False, config_data, ("%d: " % prefix + 13) + messages[prefix+13]
     # Verify the ipv6_subnet value
     try:
         ipaddress.ip_network(ipv6_subnet)
@@ -106,10 +106,10 @@ def load_pod_config(config_file=None, prefix=4000) -> Dict[str, Any]:
     # Get `podnet_a_enabled` and `podnet_b_enabled`
     podnet_a_enabled = config.get('podnet_a_enabled', None)
     if podnet_a_enabled is None:
-        return False, config_data, ("%d: " % prefix + 15) + messages[15]
+        return False, config_data, ("%d: " % prefix + 15) + messages[prefix+15]
     podnet_b_enabled = config.get('podnet_b_enabled', None)
     if podnet_a_enabled is None:
-        return False, config_data, ("%d: " % prefix + 16) + messages[16]
+        return False, config_data, ("%d: " % prefix + 16) + messages[prefix+16]
 
     # Determine enabled and disabled PodNet
     if podnet_a_enabled is True and podnet_b_enabled is False:
@@ -119,16 +119,16 @@ def load_pod_config(config_file=None, prefix=4000) -> Dict[str, Any]:
         enabled = podnet_b
         disabled = podnet_a
     elif podnet_a_enabled is True and podnet_b_enabled is True:
-        return False, config_data, ("%d: " % prefix + 17) + messages[17]
+        return False, config_data, ("%d: " % prefix + 17) + messages[prefix+17]
     elif podnet_a_enabled is False and podnet_b_enabled is False:
-        return False, config_data, ("%d: " % prefix + 18) + messages[18]
+        return False, config_data, ("%d: " % prefix + 18) + messages[prefix+18]
     else:
-        return False, config_data, ("%d: " % prefix + 19) + messages[19]
+        return False, config_data, ("%d: " % prefix + 19) + messages[prefix+19]
 
     config_data['processed']['enabled'] = enabled
     config_data['processed']['disabled'] = disabled
 
-    return True, config_data, ("%d: " % prefix + 10) + messages[10]
+    return True, config_data, ("%d: " % prefix + 10) + messages[prefix+10]
 
 def get_podnets(config_filepath):
     data = load_pod_config(config_filepath)
