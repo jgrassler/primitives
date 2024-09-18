@@ -452,6 +452,7 @@ def read(
 
     def run_podnet(podnet_node, prefix, successful_payloads, data_dict):
         retval = True
+        data_dict[podnet_node] = {}
 
         rcc = CommsWrapper(comms_ssh, podnet_node, 'robot')
         fmt = ErrorFormatter(
@@ -483,7 +484,7 @@ def read(
             data_dict[podnet_node]['entry'] = ret["payload_message"]
             fmt.add_successful('find_namespace')
 
-        ret = rcc.run(payloads['forwardv4'])
+        ret = rcc.run(payloads['find_forwardv4'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
             retval = False
             fmt.store_channel_error(ret, f"{prefix+3} : " + messages[prefix+3])
@@ -492,12 +493,12 @@ def read(
             fmt.store_payload_error(ret, f"{prefix+4}: " + messages[prefix+4])
         else:
             data_dict[podnet_node]['forwardv4'] = ret["payload_message"]
-            fmt.add_successful('forwardv4')
+            fmt.add_successful('find_forwardv4')
             if ret["payload_message"] != "1":
                 retval = False
                 fmt.store_payload_error(ret, f"{prefix+5}: " + messages[prefix+5])
 
-        ret = rcc.run(payloads['forwardv6'])
+        ret = rcc.run(payloads['find_forwardv6'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
             retval = False
             fmt.store_channel_error(ret, f"{prefix+6}: " + messages[prefix+6])
@@ -506,7 +507,7 @@ def read(
             fmt.store_payload_error(ret, f"{prefix+7}: " + messages[prefix+7])
         else:
             data_dict[podnet_node]['forwardv6'] = ret["payload_message"]
-            fmt.add_successful('forwardv6')
+            fmt.add_successful('find_forwardv6')
             if ret["payload_message"] != "1":
                 retval = False
                 fmt.store_payload_error(ret, f"{prefix+8}: " + messages[prefix+8])
