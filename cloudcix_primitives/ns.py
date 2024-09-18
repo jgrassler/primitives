@@ -290,11 +290,11 @@ def scrub(
     def run_podnet(podnet_node, prefix, successful_payloads):
         rcc = CommsWrapper(comms_ssh, podnet_node, 'robot')
         fmt = ErrorFormatter(
-            messages,
+            config_file,
             podnet_node,
             podnet_node == enabled,
-            prefix,
-            {'payload_message': 'STDOUT', 'payload_error': 'STDERR'}
+            {'payload_message': 'STDOUT', 'payload_error': 'STDERR'},
+            successful_payloads
         )
 
         payloads = {
@@ -456,11 +456,11 @@ def read(
 
         rcc = CommsWrapper(comms_ssh, podnet_node, 'robot')
         fmt = ErrorFormatter(
-            messages,
+            config_file,
             podnet_node,
             podnet_node == enabled,
-            prefix,
-            {'payload_message': 'STDOUT', 'payload_error': 'STDERR'}
+            {'payload_message': 'STDOUT', 'payload_error': 'STDERR'},
+            successful_payloads
         )
 
         payloads = {
