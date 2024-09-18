@@ -186,7 +186,7 @@ class CommsWrapper:
 class ErrorFormatter:
     """Formats error messages and keeps error/success message state if needed"""
 
-    def __init__(config_file, podnet_node, enabled, payload_channels, successful_payloads={}):
+    def __init__(self, config_file, podnet_node, enabled, payload_channels, successful_payloads={}):
         """
         Creates a new errorFormatter.
         :param config_file: Config file the PodNet configuration originates from.
