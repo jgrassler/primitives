@@ -125,16 +125,16 @@ def build(
         )
 
         payloads = {
-            'find_namespace':     "ip netns list | grep -w '{name_grepsafe}'",
-            'create_namespace':   "ip netns add {name}",
-            'enable_forwardv4':   "ip netns exec {name} sysctl --write net.ipv4.ip_forward=1",
-            'enable_forwardv6':   "ip netns exec {name} sysctl --write net.ipv6.conf.all.forwarding=1",
-            'enable_lo':          "ip netns exec {name} ip link set dev lo up",
-            'find_lo1':           "ip netns exec {name} ip link show lo1",
-            'add_lo1':            "ip netns exec {name} ip link add lo1 type dummy",
-            'find_lo1_address':   "ip netns exec {name} show dev lo1 | grep -w '{lo_addr_grepsafe}'",
-            'create_lo1_address': "ip netns exec {name} ip addr add {lo_addr} dev lo1",
-            'enable_lo1':         "ip netns exec {name} ip link set dev lo1 up",
+            'find_namespace':     f"ip netns list | grep -w '{name_grepsafe}",
+            'create_namespace':   f"ip netns add {name}",
+            'enable_forwardv4':   f"ip netns exec {name} sysctl --write net.ipv4.ip_forward=1",
+            'enable_forwardv6':   f"ip netns exec {name} sysctl --write net.ipv6.conf.all.forwarding=1",
+            'enable_lo':          f"ip netns exec {name} ip link set dev lo up",
+            'find_lo1':           f"ip netns exec {name} ip link show lo1",
+            'add_lo1':            f"ip netns exec {name} ip link add lo1 type dummy",
+            'find_lo1_address':   f"ip netns exec {name} show dev lo1 | grep -w '{lo_addr_grepsafe}",
+            'create_lo1_address': f"ip netns exec {name} ip addr add {lo_addr} dev lo1",
+            'enable_lo1':         f"ip netns exec {name} ip link set dev lo1 up",
         }
 
         ret = rcc.run(payloads['find_namespace'])
@@ -303,8 +303,8 @@ def scrub(
         )
 
         payloads = {
-            'find_namespace':     "ip netns list | grep -w '{name_grepsafe}'",
-            'delete_namespace':   "ip netns delete {name}",
+            'find_namespace':     f"ip netns list | grep -w '{name_grepsafe}'",
+            'delete_namespace':   f"ip netns delete {name}",
         }
 
         ret = rcc.run(payloads['find_namespace'])
@@ -468,13 +468,13 @@ def read(
         )
 
         payloads = {
-            'find_namespace':     "ip netns list | grep -w '{name_grepsafe}'",
-            'find_forwardv4':     "ip netns exec {name} sysctl net.ipv4.ip_forward",
-            'find_forwardv6':     "ip netns exec {name} sysctl net.ipv6.conf.all.forwarding",
-            'find_lo_status':     "ip netns exec {name} ip link show lo | grep UP,LOWER_UP",
-            'find_lo1':           "ip netns exec {name} ip link show lo1",
-            'find_lo1_status':    "ip netns exec {name} ip link show lo | grep UP,LOWER_UP",
-            'find_lo1_address':   "ip netns exec {name} show dev lo1 | grep -w '{lo_addr_grepsafe}'",
+            'find_namespace':     f"ip netns list | grep -w '{name_grepsafe}'",
+            'find_forwardv4':     f"ip netns exec {name} sysctl net.ipv4.ip_forward",
+            'find_forwardv6':     f"ip netns exec {name} sysctl net.ipv6.conf.all.forwarding",
+            'find_lo_status':     f"ip netns exec {name} ip link show lo | grep UP,LOWER_UP",
+            'find_lo1':           f"ip netns exec {name} ip link show lo1",
+            'find_lo1_status':    f"ip netns exec {name} ip link show lo | grep UP,LOWER_UP",
+            'find_lo1_address':   f"ip netns exec {name} show dev lo1 | grep -w '{lo_addr_grepsafe}'",
         }
 
         ret = rcc.run(payloads['find_namespace'])
