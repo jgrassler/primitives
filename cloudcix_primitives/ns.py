@@ -125,13 +125,13 @@ def build(
         )
 
         payloads = {
-            'find_namespace':     f"ip netns list | grep -w '{name_grepsafe}",
+            'find_namespace':     f"ip netns list | grep -w '{name_grepsafe}'",
             'create_namespace':   f"ip netns add {name}",
             'enable_forwardv4':   f"ip netns exec {name} sysctl --write net.ipv4.ip_forward=1",
             'enable_forwardv6':   f"ip netns exec {name} sysctl --write net.ipv6.conf.all.forwarding=1",
             'enable_lo':          f"ip netns exec {name} ip link set dev lo up",
             'find_lo1':           f"ip netns exec {name} ip link show lo1",
-            'add_lo1':            f"ip netns exec {name} ip link add lo1 type dummy",
+            'create_lo1':            f"ip netns exec {name} ip link add lo1 type dummy",
             'find_lo1_address':   f"ip netns exec {name} show dev lo1 | grep -w '{lo_addr_grepsafe}",
             'create_lo1_address': f"ip netns exec {name} ip addr add {lo_addr} dev lo1",
             'enable_lo1':         f"ip netns exec {name} ip link set dev lo1 up",
@@ -141,7 +141,7 @@ def build(
         if ret["channel_code"] != CHANNEL_SUCCESS:
             return False, fmt.channel_error(ret, f"{prefix+1}: " + messages[prefix+1]), fmt.successful_payloads
         create_namespace = True
-        if ret["payload_code"] != SUCCESS_CODE:
+        if ret["payload_code"] == SUCCESS_CODE:
             # No need to create this name space if it exists already
             create_namespace = False
         fmt.add_successful('find_namespace')
@@ -181,7 +181,7 @@ def build(
         if ret["channel_code"] != CHANNEL_SUCCESS:
             return False, fmt.channel_error(ret, f"{prefix+10}: " + messages[prefix+10]), fmt.successful_payloads
         create_lo1 = True
-        if ret["payload_code"] != SUCCESS_CODE:
+        if ret["payload_code"] == SUCCESS_CODE:
             # No need to create lo1 if it exists already
             create_lo1 = False
         fmt.add_successful('find_lo1')
@@ -192,7 +192,7 @@ def build(
                 return False, fmt.channel_error(ret, f"{prefix+11}: " + messages[prefix+11]), fmt.successful_payloads
             if ret["payload_code"] != SUCCESS_CODE:
                 return False, fmt.payload_error(ret, f"{prefix+12}: " + messages[prefix+12]), fmt.successful_payloads
-        fmt.add_successful('create_lo1')
+            fmt.add_successful('create_lo1')
 
         ret = rcc.run(payloads['find_lo1_address'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
