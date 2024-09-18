@@ -139,7 +139,7 @@ def build(
 
         ret = rcc.run(payloads['find_namespace'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
-            return False, fmt.channel_error(ret, "{prefix+1}: " + messages[prefix+1])
+            return False, fmt.channel_error(ret, "{prefix+1}: " + messages[prefix+1]), fmt.successful_payloads
         create_namespace = True
         if ret["payload_code"] == SUCCESS_CODE:
             # No need to create this name space if it exists already
@@ -151,35 +151,35 @@ def build(
             ret = rcc.run(payloads['create_namespace'])
 
             if ret["channel_code"] != CHANNEL_SUCCESS:
-                return False, fmt.channel_error(ret, "{prefix+2}: " + messages[prefix+2])
+                return False, fmt.channel_error(ret, "{prefix+2}: " + messages[prefix+2]), fmt.successful_payloads
             if ret["payload_code"] != SUCCESS_CODE:
-                return False, fmt.payload_error(ret, "{prefix+3}: " + messages[prefix+3])
+                return False, fmt.payload_error(ret, "{prefix+3}: " + messages[prefix+3]), fmt.successful_payloads
             fmt.add_successful('create_namespace')
 
         ret = rcc.run(payloads['enable_forwardv4'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
-            return False, fmt.channel_error(ret, "{prefix+4}: " + messages[prefix+4])
+            return False, fmt.channel_error(ret, "{prefix+4}: " + messages[prefix+4]), fmt.successful_payloads
         if ret["payload_code"] != SUCCESS_CODE:
-            return False, fmt.payload_error(ret, "{prefix+5}: " + messages[prefix+5])
+            return False, fmt.payload_error(ret, "{prefix+5}: " + messages[prefix+5]), fmt.successful_payloads
         fmt.add_successful('enable_forwardv4')
 
         ret = rcc.run(payloads['enable_forwardv6'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
-            return False, fmt.channel_error(ret, "{prefix+6}: " + messages[prefix+6])
+            return False, fmt.channel_error(ret, "{prefix+6}: " + messages[prefix+6]), fmt.successful_payloads
         if ret["payload_code"] != SUCCESS_CODE:
-            return False, fmt.payload_error(ret, "{prefix+7}: " + messages[prefix+7])
+            return False, fmt.payload_error(ret, "{prefix+7}: " + messages[prefix+7]), fmt.successful_payloads
         fmt.add_successful('enable_forwardv6')
 
         ret = rcc.run(payloads['enable_lo'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
-            return False, fmt.channel_error(ret, "{prefix+8}: " + messages[prefix+8])
+            return False, fmt.channel_error(ret, "{prefix+8}: " + messages[prefix+8]), fmt.successful_payloads
         if ret["payload_code"] != SUCCESS_CODE:
-            return False, fmt.payload_error(ret, "{prefix+9}: " + messages[prefix+9])
+            return False, fmt.payload_error(ret, "{prefix+9}: " + messages[prefix+9]), fmt.successful_payloads
         fmt.add_successful('enable_lo')
 
         ret = rcc.run(payloads['find_lo1'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
-            return False, fmt.channel_error(ret, "{prefix+10}: " + messages[prefix+10])
+            return False, fmt.channel_error(ret, "{prefix+10}: " + messages[prefix+10]), fmt.successful_payloads
         create_lo1 = True
         if ret["payload_code"] != SUCCESS_CODE:
             # No need to create lo1 if it exists already
@@ -189,14 +189,14 @@ def build(
         if create_lo1:
             ret = rcc.run(payloads['create_lo1'])
             if ret["channel_code"] != CHANNEL_SUCCESS:
-                return False, fmt.channel_error(ret, "{prefix+11}: " + messages[prefix+11])
+                return False, fmt.channel_error(ret, "{prefix+11}: " + messages[prefix+11]), fmt.successful_payloads
             if ret["payload_code"] != SUCCESS_CODE:
-                return False, fmt.payload_error(ret, "{prefix+12}: " + messages[prefix+12])
+                return False, fmt.payload_error(ret, "{prefix+12}: " + messages[prefix+12]), fmt.successful_payloads
         fmt.add_successful('create_lo1')
 
         ret = rcc.run(payloads['find_lo1_address'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
-            return False, fmt.channel_error(ret, "{prefix+13}: " + messages[prefix+13])
+            return False, fmt.channel_error(ret, "{prefix+13}: " + messages[prefix+13]), fmt.successful_payloads
         create_lo1_address = True
         if ret["payload_code"] != SUCCESS_CODE:
             # No need to assign this address to lo1 if it has been assigned already
@@ -206,16 +206,16 @@ def build(
         if create_lo1_address:
             ret = rcc.run(payloads['create_lo1_address'])
             if ret["channel_code"] != CHANNEL_SUCCESS:
-                return False, fmt.channel_error(ret, "{prefix+14}: " + messages[prefix+14])
+                return False, fmt.channel_error(ret, "{prefix+14}: " + messages[prefix+14]), fmt.successful_payloads
             if ret["payload_code"] != SUCCESS_CODE:
-                return False, fmt.payload_error(ret, "{prefix+15}: " + messages[prefix+15])
+                return False, fmt.payload_error(ret, "{prefix+15}: " + messages[prefix+15]), fmt.successful_payloads
             fmt.add_successful('create_lo1_address')
 
         ret = rcc.run(payloads['enable_lo1'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
-            return False, fmt.channel_error(ret, "{prefix+16}: " + messages[prefix+16])
+            return False, fmt.channel_error(ret, "{prefix+16}: " + messages[prefix+16]), fmt.successful_payloads
         if ret["payload_code"] != SUCCESS_CODE:
-            return False, fmt.payload_error(ret, "{prefix+17}: " + messages[prefix+17])
+            return False, fmt.payload_error(ret, "{prefix+17}: " + messages[prefix+17]), fmt.successful_payloads
         fmt.add_successful('enable_lo1')
 
         return True, "", fmt.successful_payloads
@@ -309,7 +309,7 @@ def scrub(
 
         ret = rcc.run(payloads['find_namespace'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
-            return False, fmt.channel_error(ret, prefix+1)
+            return False, fmt.channel_error(ret, prefix+1), fmt.successful_payloads
         delete_namespace = True
         if ret["payload_code"] == SUCCESS_CODE:
             # No need to delete this name space if it exists already
@@ -321,9 +321,9 @@ def scrub(
             ret = rcc.run(payloads['delete_namespace'])
 
             if ret["channel_code"] != CHANNEL_SUCCESS:
-                return False, fmt.channel_error(ret, "{prefix+2}: " + messages[prefix+2])
+                return False, fmt.channel_error(ret, "{prefix+2}: " + messages[prefix+2]), fmt.successful_payloads
             if ret["payload_code"] != SUCCESS_CODE:
-                return False, fmt.payload_error(ret, "{prefix+3}: " + messages[prefix+3])
+                return False, fmt.payload_error(ret, "{prefix+3}: " + messages[prefix+3]), fmt.successful_payloads
             fmt.add_successful('delete_namespace')
 
         return True, "", fmt.successful_payloads
