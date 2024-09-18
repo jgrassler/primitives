@@ -387,6 +387,15 @@ def read(
                   forwardv6:
                     description: content of net.ipv6.conf.all.forwarding sysctl in network name space
                     type: string
+                  lo_status:
+                    description: link status of lo interface
+                    type: string
+                  lo1_status:
+                    description: link status of lo1 interface
+                    type: string
+                  lo1_address:
+                    description: ip addr output for lo1 interface (filtered for lo_addr)
+                    type: string
           message:
             description: a status or error message, depending on whether the operation succeeded or not.
             type: string
@@ -481,7 +490,7 @@ def read(
             retval = False
             fmt.store_payload_error(ret, f"{prefix+2} : " + messages[prefix+2])
         else:
-            data_dict[podnet_node]['entry'] = ret["payload_message"]
+            data_dict[podnet_node]['entry'] = ret["payload_message"].strip()
             fmt.add_successful('find_namespace')
 
         ret = rcc.run(payloads['find_forwardv4'])
@@ -492,7 +501,7 @@ def read(
             retval = False
             fmt.store_payload_error(ret, f"{prefix+4}: " + messages[prefix+4])
         else:
-            data_dict[podnet_node]['forwardv4'] = ret["payload_message"]
+            data_dict[podnet_node]['forwardv4'] = ret["payload_message"].strip()
             fmt.add_successful('find_forwardv4')
             if ret["payload_message"].strip() != "1":
                 retval = False
@@ -508,7 +517,7 @@ def read(
             retval = False
             fmt.store_payload_error(ret, f"{prefix+7}: " + messages[prefix+7])
         else:
-            data_dict[podnet_node]['forwardv6'] = ret["payload_message"]
+            data_dict[podnet_node]['forwardv6'] = ret["payload_message"].strip()
             fmt.add_successful('find_forwardv6')
             if ret["payload_message"].strip() != "1":
                 retval = False
@@ -525,7 +534,7 @@ def read(
             fmt.store_payload_error(ret, f"{prefix+10}: " + messages[prefix+10])
         else:
             fmt.add_successful('find_lo_status')
-            data_dict[podnet_node]['lo_status'] = ret["payload_message"]
+            data_dict[podnet_node]['lo_status'] = ret["payload_message"].strip()
 
         ret = rcc.run(payloads['find_lo1'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
@@ -536,7 +545,6 @@ def read(
             fmt.store_payload_error(ret, f"{prefix+12}: " + messages[prefix+12])
         else:
             fmt.add_successful('find_lo1')
-            data_dict[podnet_node]['lo1_config'] = ret["payload_message"]
 
         ret = rcc.run(payloads['find_lo1_status'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
@@ -547,6 +555,7 @@ def read(
             fmt.store_payload_error(ret, f"{prefix+14}: " + messages[prefix+14])
         else:
             fmt.add_successful('find_lo1_status')
+            data_dict[podnet_node]['lo1_status'] = ret["payload_message"].strip()
 
         ret = rcc.run(payloads['find_lo1_address'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
@@ -557,6 +566,7 @@ def read(
             fmt.store_payload_error(ret, f"{prefix+16}: " + messages[prefix+16])
         else:
             fmt.add_successful('find_lo1_address')
+            data_dict[podnet_node]['lo1_address'] = ret["payload_message"].strip()
 
         return retval, fmt.message_list, fmt.successful_payloads, data_dict
 
