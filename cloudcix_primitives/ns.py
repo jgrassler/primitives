@@ -465,12 +465,12 @@ def read(
 
         payloads = {
             'find_namespace':     f"ip netns list | grep -w '{name_grepsafe}'",
-            'find_forwardv4':     f"ip netns exec {name} sysctl net.ipv4.ip_forward",
-            'find_forwardv6':     f"ip netns exec {name} sysctl net.ipv6.conf.all.forwarding",
+            'find_forwardv4':     f"ip netns exec {name} sysctl -n net.ipv4.ip_forward",
+            'find_forwardv6':     f"ip netns exec {name} sysctl -n net.ipv6.conf.all.forwarding",
             'find_lo_status':     f"ip netns exec {name} ip link show lo | grep UP,LOWER_UP",
             'find_lo1':           f"ip netns exec {name} ip link show lo1",
             'find_lo1_status':    f"ip netns exec {name} ip link show lo | grep UP,LOWER_UP",
-            'find_lo1_address':   f"ip netns exec {name} show dev lo1 | grep -w '{lo_addr_grepsafe}'",
+            'find_lo1_address':   f"ip netns exec {name} ip addr show lo1 | grep -w '{lo_addr_grepsafe}'",
         }
 
         ret = rcc.run(payloads['find_namespace'])
@@ -494,9 +494,11 @@ def read(
         else:
             data_dict[podnet_node]['forwardv4'] = ret["payload_message"]
             fmt.add_successful('find_forwardv4')
-            if ret["payload_message"] != "1":
+            if ret["payload_message"].strip() != "1":
                 retval = False
-                fmt.store_payload_error(ret, f"{prefix+5}: " + messages[prefix+5])
+                fmt.store_payload_error(ret, f"{prefix+5}: "
+                    + messages[prefix+5]
+                    + f'`{ret["payload_message"].strip()}`. Payload exit status: ')
 
         ret = rcc.run(payloads['find_forwardv6'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
@@ -508,9 +510,11 @@ def read(
         else:
             data_dict[podnet_node]['forwardv6'] = ret["payload_message"]
             fmt.add_successful('find_forwardv6')
-            if ret["payload_message"] != "1":
+            if ret["payload_message"].strip() != "1":
                 retval = False
-                fmt.store_payload_error(ret, f"{prefix+8}: " + messages[prefix+8])
+                fmt.store_payload_error(ret, f"{prefix+8}: "
+                    + messages[prefix+8]
+                    + f'`{ret["payload_message"].strip()}`. Payload exit status: ')
 
         ret = rcc.run(payloads['find_lo_status'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
@@ -554,7 +558,7 @@ def read(
         else:
             fmt.add_successful('find_lo1_address')
 
-        return retval, fmt.message_list, fmt.successful_payloads
+        return retval, fmt.message_list, fmt.successful_payloads, data_dict
 
     retval_a, msg_list, successful_payloads, data_dict = run_podnet(enabled, 3220, {}, {})
 
@@ -563,4 +567,4 @@ def read(
     if not (retval_a and retval_b):
         return (retval_a and retval_b), data_dict, msg_list
     else:
-       return True, data_dict, (messages[1100])
+       return True, data_dict, (messages[1200])
