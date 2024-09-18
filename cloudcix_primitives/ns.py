@@ -283,7 +283,7 @@ def scrub(
               indent=2,
               sort_keys=True)
     enabled = config_data['processed']['enabled']
-    disabled = config_data['processed']['enabled']
+    disabled = config_data['processed']['disabled']
 
     name_grepsafe = name.replace('.', '\.')
 
