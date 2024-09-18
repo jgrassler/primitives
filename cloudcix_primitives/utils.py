@@ -224,10 +224,10 @@ class ErrorFormatter:
         return self._format_payload_error(rcc_return, msg_index)
 
     def store_channel_error(self, rcc_return, msg_index):
-        self.message_list.append(_format_channel_error(rcc_return, msg_index))
+        self.message_list.append(self._format_channel_error(rcc_return, msg_index))
 
     def store_payload_error(self, rcc_return, msg_index):
-        self.message_list.append(_format_payload_error(rcc_return, msg_index))
+        self.message_list.append(self._format_payload_error(rcc_return, msg_index))
 
     def _payloads_context(self):
         context = list("")
