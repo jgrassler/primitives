@@ -7,7 +7,7 @@ from typing import Any, Dict, Tuple
 # libs
 from jinja2 import Environment, meta, FileSystemLoader, Template
 # local
-from exceptions import (
+from cloudcix_primitives.exceptions import (
     CouldNotFindPodNets,
     InvalidPodNetPrivate,
     InvalidPodNetMgmt,
