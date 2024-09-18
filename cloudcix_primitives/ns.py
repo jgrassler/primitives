@@ -306,8 +306,8 @@ def scrub(
         if ret["channel_code"] != CHANNEL_SUCCESS:
             return False, fmt.channel_error(ret, prefix+1), fmt.successful_payloads
         delete_namespace = True
-        if ret["payload_code"] == SUCCESS_CODE:
-            # No need to delete this name space if it exists already
+        if ret["payload_code"] != SUCCESS_CODE:
+            # No need to delete this name space if it is gone already
             delete_namespace = False
         fmt.add_successful('find_namespace')
 
