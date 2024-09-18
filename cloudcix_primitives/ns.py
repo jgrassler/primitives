@@ -131,8 +131,8 @@ def build(
             'enable_forwardv6':   f"ip netns exec {name} sysctl --write net.ipv6.conf.all.forwarding=1",
             'enable_lo':          f"ip netns exec {name} ip link set dev lo up",
             'find_lo1':           f"ip netns exec {name} ip link show lo1",
-            'create_lo1':            f"ip netns exec {name} ip link add lo1 type dummy",
-            'find_lo1_address':   f"ip netns exec {name} show dev lo1 | grep -w '{lo_addr_grepsafe}",
+            'create_lo1':         f"ip netns exec {name} ip link add lo1 type dummy",
+            'find_lo1_address':   f"ip netns exec {name} ip addr show lo1 | grep -w '{lo_addr_grepsafe}'",
             'create_lo1_address': f"ip netns exec {name} ip addr add {lo_addr} dev lo1",
             'enable_lo1':         f"ip netns exec {name} ip link set dev lo1 up",
         }
@@ -198,7 +198,7 @@ def build(
         if ret["channel_code"] != CHANNEL_SUCCESS:
             return False, fmt.channel_error(ret, f"{prefix+13}: " + messages[prefix+13]), fmt.successful_payloads
         create_lo1_address = True
-        if ret["payload_code"] != SUCCESS_CODE:
+        if ret["payload_code"] == SUCCESS_CODE:
             # No need to assign this address to lo1 if it has been assigned already
             create_lo1_address = False
         fmt.add_successful('find_lo1_address')
@@ -235,7 +235,6 @@ def build(
 
 def scrub(
         name: str,
-        lo_addr='169.254.169.254',
         config_file=None,
 ) -> Tuple[bool, str]:
     """
@@ -247,10 +246,6 @@ def scrub(
             description: network namespace's name
             type: string
             required: true
-        lo_addr:
-            description: IP address to assign to the namespace's loopback interface.
-            type: string
-            required: false
         config_file:
             description: path to the config.json file
             type: string
