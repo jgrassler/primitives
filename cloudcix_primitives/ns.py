@@ -126,7 +126,7 @@ def build(
 
         payloads = {
             'find_namespace':     "ip netns list | grep -w '{name_grepsafe}'",
-            'create_namespace':   "ip netns create {name}",
+            'create_namespace':   "ip netns add {name}",
             'enable_forwardv4':   "ip netns exec {name} sysctl --write net.ipv4.ip_forward=1",
             'enable_forwardv6':   "ip netns exec {name} sysctl --write net.ipv6.conf.all.forwarding=1",
             'enable_lo':          "ip netns exec {name} ip link set dev lo up",
