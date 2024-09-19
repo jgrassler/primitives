@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Tuple
 # lib
 from cloudcix.rcc import comms_ssh, CHANNEL_SUCCESS, VALIDATION_ERROR, CONNECTION_ERROR
+from cloudcix_primitives.utils import load_pod_config, SSHCommsWrapper, PodnetErrorFormatter
 # local
 
 
@@ -52,69 +53,11 @@ def build(
             network:
               type: object
               required: true
-              description: the VM's network configuration
-              properties:
-                nameservers:
-                  description: the VM's DNS configuration
-                  type: object
-                  required: true
-                  properties:
-                    addresses:
-                      description: list of name server IP addresses
-                      type: array
-                      required: true
-                      items:
-                        description: a name server IP address such as `8.8.8.8`. At least one must be specified.
-                        type: string
-                        required: true
-                    search:
-                      type: array
-                      description: the machine's search domains for unqualified host names
-                      required: false
-                      items:
-                        description: | a search domain to qualify unqualified
-                                       host names with, such as `cloudcix.com`
-                        required: false
-                        type: string
-                interfaces:
-                  type: object
-                  required: true
-                  description: The VM's network interface configuration
-                  properties:
-                    mac_address:
-                      description: | The interface's MAC address (colon separated
-                                     bytes, lower case)
-                      type: string
-                      required: true
-                    addresses:
-                      description: The interface's IP addresses. At least one is required.
-                      type: array
-                      required: true
-                      items:
-                        description: | an IP address with subnet mask specified
-                                       in CIDR notation as understood by ip(8), e.g.
-                                       `10.0.5.221/24`
-                        type: string
-                        required: true
-                    routes:
-                      description: routes to create for this particular interface. While optional, setting at
-                                   least a default route is highly recommended.
-                      type: object
-                      required: false
-                      properties:
-                        to:
-                          description: | the route's destination. either a network
-                                         address with subnet mask specified in
-                                         CIDR notation, e.g. `10.0.6.0/8` or the
-                                         keyword `default` to indicate a default
-                                         route.
-                          type: string
-                          required: true
-                        via:
-                          description: | IP address of the route's next hop, e.g.
-                                         `10.0.0.1`.
-                          type: string
-                          required: true
+              description: |
+                  the VM's network configuration. This is a dictionary representing a netplan v2
+                  configuration. Such a dictionary can be obtained by
+                  deserializing a netplan v2 configuration file using a YAML
+                  parser.
         config_file:
             description: path to the config.json file
             type: string
@@ -132,27 +75,15 @@ def build(
     # Define message
     messages = {
         1000: f'1000: Successfully created {domain_path}/metadata and {domain_path}/userdata on both PodNet nodes.',
-        2111: f'2011: Config file {config_file} loaded.',
-        3011: f'3011: Failed to load config file {config_file}, It does not exist.',
-        3012: f'3012: Failed to get `ipv6_subnet` from config file {config_file}',
-        3013: f'3013: Invalid value for `ipv6_subnet` from config file {config_file}',
-        3014: f'3014: Failed to get `podnet_a_enabled` from config file {config_file}',
-        3015: f'3015: Failed to get `podnet_b_enabled` from config file {config_file}',
-        3016: f'3016: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are True',
-        3017: f'3017: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, both are False',
-        3018: f'3018: Invalid values for `podnet_a_enabled` and `podnet_b_enabled`, one or both are non booleans',
-        3021: f'3021: Failed to connect to the enabled PodNet from the config file {config_file} for create_metadata payload: ',
-        3022: f'3022: Failed to create metadata file {domain_path}/metadata on the enabled PodNet. Payload exited with status ',
-        3023: f'3023: Failed to connect to the enabled PodNet from the config file {config_file} for create_userdata payload: ',
-        3023: f'3024: Failed to create userdata file {domain_path}/userdata on the enabled PodNet Payload exited with status ',
-        3031: f'3031: Successfully created `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to connect to the disabled PodNet '
-              f'from the config file {config_file}: ',
-        3032: f'3032: Successfully created `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to create on the disabled PodNet. '
-               'Payload exited with status ',
-        3033: f'3033: Successfully created `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to connect to the disabled PodNet. '
-              f'from the config file {config_file}: ',
-        3034: f'3034: Successfully created `metadata` and `userdata` in {domain_path}/ on enabled PodNet but failed to create on the disabled PodNet. '
-               'Payload exited with status ',
+        3021: f'3021: Failed to connect to the enabled PodNet from config file {config_file} for create_metadata payload: ',
+        3022: f'3022: Failed to run create_metadata payload on the enabled PodNet. Payload exited with status ',
+        3023: f'3023: Failed to connect to the enabled PodNet from config file {config_file} for create_userdata payload: ',
+        3024: f'3024: Failed to run create_userdata payload on the enabled PodNet. Payload exited with status ',
+
+        3031: f'3021: Failed to connect to the enabled PodNet from config file {config_file} for create_metadata payload: ',
+        3032: f'3022: Failed to run create_metadata payload on the enabled PodNet. Payload exited with status ',
+        3033: f'3023: Failed to connect to the enabled PodNet from config file {config_file} for create_userdata payload: ',
+        3034: f'3024: Failed to run create_userdata payload on the enabled PodNet. Payload exited with status ',
     }
 
     metadata_json = json.dumps(
@@ -163,111 +94,68 @@ def build(
 
     # Default config_file if it is None
     if config_file is None:
-        config_file = '/etc/cloudcix/pod/configs/config.json'
+        config_file = '/opt/robot/config.json'
 
-    # Get load config from config_file
-    if not Path(config_file).exists():
-        return False, messages[3011]
-    with Path(config_file).open('r') as file:
-        config = json.load(file)
+    status, config_data, msg = load_pod_config(config_file)
+    if not status:
+      if config_data['raw'] is None:
+          return False, msg
+      else:
+          return False, msg + "\nJSON dump of raw configuration:\n" + json.dumps(config_data['raw'],
+              indent=2,
+              sort_keys=True)
+    enabled = config_data['processed']['enabled']
+    disabled = config_data['processed']['disabled']
 
-    # Get the ipv6_subnet from config_file
-    ipv6_subnet = config.get('ipv6_subnet', None)
-    if ipv6_subnet is None:
-        return False, messages[3012]
-    # Verify the ipv6_subnet value
-    try:
-        ipaddress.ip_network(ipv6_subnet)
-    except ValueError:
-        return False, messages[3013]
 
-    # Get the PodNet Mgmt ips from ipv6_subnet
-    podnet_a = f'{ipv6_subnet.split("/")[0]}10:0:2'
-    podnet_b = f'{ipv6_subnet.split("/")[0]}10:0:3'
+    def run_podnet(podnet_node, prefix, successful_payloads):
+        rcc = SSHCommsWrapper(comms_ssh, podnet_node, 'robot')
+        fmt = PodnetErrorFormatter(
+            config_file,
+            podnet_node,
+            podnet_node == enabled,
+            {'payload_message': 'STDOUT', 'payload_error': 'STDERR'},
+            successful_payloads
+        )
 
-    # Get `podnet_a_enabled` and `podnet_b_enabled`
-    podnet_a_enabled = config.get('podnet_a_enabled', None)
-    if podnet_a_enabled is None:
-        return False, messages[3014]
-    podnet_b_enabled = config.get('podnet_b_enabled', None)
-    if podnet_a_enabled is None:
-        return False, messages[3015]
+        payloads = {
+            'create_metadata': "\n".join([
+                f'tee {domain_path}/metadata <<EOF',
+                metadata_json,
+                "EOF"
+            ]),
 
-    # First run on enabled PodNet
-    if podnet_a_enabled is True and podnet_b_enabled is False:
-        enabled = podnet_a
-        disabled = podnet_b
-    elif podnet_a_enabled is False and podnet_b_enabled is True:
-        enabled = podnet_b
-        disabled = podnet_a
-    elif podnet_a_enabled is True and podnet_b_enabled is True:
-        return False, messages[3016]
-    elif podnet_a_enabled is False and podnet_b_enabled is False:
-        return False, messages[3017]
-    else:
-        return False, messages[3018]
+            'create_userdata': "\n".join([
+                    f'tee {domain_path}/userdata <<EOF',
+                    userdata,
+                    "EOF"
+                    ])
+        }
 
-    # define payloads
-    create_userdata_payload = "\n".join([
-        f'tee {domain_path}/userdata <<EOF',
-        userdata,
-        "EOF"
-        ])
 
-    create_metadata_payload = "\n".join([
-        f'tee {domain_path}/metadata <<EOF',
-        metadata_json,
-        "EOF"
-        ])
+        ret = rcc.run(payloads['create_metadata'])
+        if ret["channel_code"] != CHANNEL_SUCCESS:
+            return False, fmt.channel_error(ret, f"{prefix+1}: " + messages[prefix+1]), fmt.successful_payloads
+        if ret["payload_code"] != SUCCESS_CODE:
+            return False, fmt.payload_error(ret, f"{prefix+2}: " + messages[prefix+2]), fmt.successful_payloads
+        fmt.add_successful('create_metadata', ret)
 
-    # call rcc comms_ssh on enabled PodNet
-    ret = comms_ssh(
-        host_ip=enabled,
-        payload=create_metadata_payload,
-        username='robot',
-    )
-    if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3021] + f'channel_code: {ret["channel_code"]}.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
+        ret = rcc.run(payloads['create_userdata'])
+        if ret["channel_code"] != CHANNEL_SUCCESS:
+            return False, fmt.channel_error(ret, f"{prefix+3}: " + messages[prefix+3]), fmt.successful_payloads
+        if ret["payload_code"] != SUCCESS_CODE:
+            return False, fmt.payload_error(ret, f"{prefix+4}: " + messages[prefix+4]), fmt.successful_payloads
+        fmt.add_successful('create_userdata', ret)
 
-    if ret["payload_code"] != SUCCESS_CODE:
-        return False, messages[3022] + f'{ret["payload_code"]}.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
+        return True, "", fmt.successful_payloads
 
-    # call rcc comms_ssh on enabled PodNet
-    ret = comms_ssh(
-        host_ip=enabled,
-        payload=create_userdata_payload,
-        username='robot',
-    )
-    if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3023] + f'channel_code: {ret["channel_code"]}.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
+    status, msg, successful_payloads = run_podnet(enabled, 3020, {})
+    if status == False:
+        return status, msg
 
-    if ret["payload_code"] != SUCCESS_CODE:
-        return False, messages[3024]  + f'{ret["payload_code"]}.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
-
-    # call rcc comms_ssh on disabled PodNet
-    ret = comms_ssh(
-        host_ip=disabled,
-        payload=create_metadata_payload,
-        username='robot',
-    )
-    if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3031] + f'channel_code: {ret["channel_code"]}.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
-
-    if ret["payload_code"] != SUCCESS_CODE:
-        return False, messages[3032] + f'{ret["payload_code"]}.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
-
-    # call rcc comms_ssh on disabled PodNet
-    ret = comms_ssh(
-        host_ip=disabled,
-        payload=create_userdata_payload,
-        username='robot',
-    )
-    if ret["channel_code"] != CHANNEL_SUCCESS:
-        return False, messages[3033] + f'channel_code: {ret["channel_code"]}.\nchannel_message: {channel_message}\nchannel_error: {channel_error}'
-
-    if ret["payload_code"] != SUCCESS_CODE:
-        return False, messages[3034]  + f'{ret["payload_code"]}.\nSTDOUT: {ret["payload_message"]}\nSTDERR: {ret["payload_error"]}'
-
+    status, msg, successful_payloads = run_podnet(disabled, 3030, successful_payloads)
+    if status == False:
+        return status, msg
 
     return True, messages[1000]
 
