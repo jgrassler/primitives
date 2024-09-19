@@ -42,3 +42,16 @@ it and push it. The only problem arises when you add new files to the code
 base. In this case, you have to run `pip install -e .` (substitute `.` by the
 path to this repository as needed) again in the virtualenv. Otherwise, these
 files will not be available.
+
+## Helpers and Utilities
+
+We have a small library of utility functions to make primitive development
+easier. Refer to the inline documentation of `cloudcix_primitives.utils` to
+learn about them.
+
+
+## Templates
+
+Right now, `cloudcix_primitives.ns` is our reference implementation for a
+primitive. Please use this primitive as a template when developing new
+primitives.
