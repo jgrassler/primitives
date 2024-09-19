@@ -49,9 +49,46 @@ We have a small library of utility functions to make primitive development
 easier. Refer to the inline documentation of `cloudcix_primitives.utils` to
 learn about them.
 
-
 ## Templates
 
 Right now, `cloudcix_primitives.ns` is our reference implementation for a
 primitive. Please use this primitive as a template when developing new
-primitives.
+primitives. Read below for patterns you should use.
+
+### Patterns to use
+
+#### RCC Wrappers
+
+When running `cloudcix.rcc.*` functions, do not call them directly since they
+take a lot of parameters which needlessly uses up a lot of screen space in your
+primitive. Either use an existing wrapper such as
+`cloudcix_primitives.utils.SSHCommsWrapper` or write your own if there's no
+wrapper for the function you are using. The wrapper's purpose is to store the
+parameters that are going to be identical every time you call the RCC function.
+
+The only possible exception to that rule would be a very simple primitive where
+you only ever call the RCC function once. In this case, there'd be zero benefit
+in using a wrapper.
+
+#### Error formatters
+
+If you do your own error formatting, you will use a lot of screen space as
+well. Again, use an existing error formatter such as
+`cloudcix_primitives.utils.PodnetErrorFormatter` or write your own modelled on
+that one. Since not all primitives are going to be operating on PodNet nodes,
+we are eventually going to have to write different error formatters for e.g.
+hypervisors.
+
+Do not forget to use the formatter's `add_successful()` method after every
+successfully run payload to record the payload's name and output. This adds
+very valuable debugging information that can be useful in cases where a payload
+was considered successful but actually did not actually bring about the outcome
+it was supposed to bring about.
+
+#### DRY (Do not Repeat Yourself)
+
+In situations where you have to run the same set of payloads multiple times,
+such as operations on PodNet nodes, try to avoid typing out that set of
+instructions multiple times. You could use something like the inline
+`run_podnet()` function in the `ns` primitive's verbs or come up with a
+solution of your own.
