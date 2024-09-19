@@ -298,7 +298,6 @@ class PodnetErrorFormatter:
         for k in sorted(self.successful_payloads.keys()):
             context.append(f'{k}: ')
             for payload in self.successful_payloads[k]:
-                import pdb; pdb.set_trace()
                 context.append(f'  {payload["payload_name"]}: ' )
                 if payload["rcc_return"] is not None:
                     context.append(f'    status: %s' % self.payload_channels['payload_status'] )
