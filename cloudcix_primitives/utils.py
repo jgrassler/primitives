@@ -183,7 +183,7 @@ class CommsWrapper:
             username=self.username
         )
 
-class ErrorFormatter:
+class PodnetErrorFormatter:
     """Formats error messages and keeps error/success message state if needed"""
 
     def __init__(self, config_file, podnet_node, enabled, payload_channels, successful_payloads={}):

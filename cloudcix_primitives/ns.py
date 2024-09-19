@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Tuple
 # lib
 from cloudcix.rcc import comms_ssh, CHANNEL_SUCCESS, VALIDATION_ERROR, CONNECTION_ERROR
-from cloudcix_primitives.utils import load_pod_config, CommsWrapper, ErrorFormatter
+from cloudcix_primitives.utils import load_pod_config, CommsWrapper, PodnetErrorFormatter
 # local
 
 
@@ -116,7 +116,7 @@ def build(
 
     def run_podnet(podnet_node, prefix, successful_payloads):
         rcc = CommsWrapper(comms_ssh, podnet_node, 'robot')
-        fmt = ErrorFormatter(
+        fmt = PodnetErrorFormatter(
             config_file,
             podnet_node,
             podnet_node == enabled,
@@ -289,7 +289,7 @@ def scrub(
 
     def run_podnet(podnet_node, prefix, successful_payloads):
         rcc = CommsWrapper(comms_ssh, podnet_node, 'robot')
-        fmt = ErrorFormatter(
+        fmt = PodnetErrorFormatter(
             config_file,
             podnet_node,
             podnet_node == enabled,
@@ -464,7 +464,7 @@ def read(
         data_dict[podnet_node] = {}
 
         rcc = CommsWrapper(comms_ssh, podnet_node, 'robot')
-        fmt = ErrorFormatter(
+        fmt = PodnetErrorFormatter(
             config_file,
             podnet_node,
             podnet_node == enabled,
