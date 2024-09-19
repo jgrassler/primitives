@@ -65,16 +65,18 @@ def build(
         3023: f'Failed to connect to the enabled PodNet for find_process_payload: ',
         3024: f'Failed to connect to the enabled PodNet for start_nginx payload: ',
         3025: f'Failed to run start_nginx payload on the enabled PodNet. Payload exited with status ',
-        3026: f'Failed to connect to the enabled PodNet for reload_nginx payload: ',
-        3027: f'Failed to run reload_nginx payload on the enabled PodNet. Payload exited with status ',
+        3026: f'Failed to run start_nginx payload on the enabled PodNet: Stderr not empty. Payload exited with status ',
+        3027: f'Failed to connect to the enabled PodNet for reload_nginx payload: ',
+        3028: f'Failed to run reload_nginx payload on the enabled PodNet. Payload exited with status ',
 
         3051: f'Failed to connect to the disabled PodNet for create_config payload: ',
         3052: f'Failed to run create_config payload on the disabled PodNet. Payload exited with status ',
         3053: f'Failed to connect to the disabled PodNet for find_process_payload: ',
         3054: f'Failed to connect to the disabled PodNet for start_nginx payload: ',
         3055: f'Failed to run start_nginx payload on the disabled PodNet. Payload exited with status ',
-        3056: f'Failed to connect to the disabled PodNet for reload_nginx payload: ',
-        3057: f'Failed to run reload_nginx payload on the disabled PodNet. Payload exited with status ',
+        3056: f'Failed to run start_nginx payload on the disabled PodNet: Stderr not empty. Payload exited with status ',
+        3057: f'Failed to connect to the disabled PodNet for reload_nginx payload: ',
+        3058: f'Failed to run reload_nginx payload on the disabled PodNet. Payload exited with status ',
 
     }
 
@@ -120,7 +122,7 @@ def build(
             {'payload_message': 'STDOUT', 'payload_error': 'STDERR'},
             successful_payloads
         )
-        
+
         nginx_config_path_grepsafe = nginx_config_path.replace('.', '\.')
 
         payloads = {
@@ -158,13 +160,17 @@ def build(
                 return False, fmt.channel_error(ret, f"{prefix+4}: " + messages[prefix+4]), fmt.successful_payloads
             if ret["payload_code"] != SUCCESS_CODE:
                 return False, fmt.payload_error(ret, f"{prefix+5}: " + messages[prefix+5]), fmt.successful_payloads
+            # nginx will ocassionally start if there are less than serious problems, but it will repart them on
+            # standard error. Therefore we fail if there's anything on stderr.
+            if ret["payload_error"] != "":
+                return False, fmt.payload_error(ret, f"{prefix+6}: " + messages[prefix+6]), fmt.successful_payloads
             fmt.add_successful('start_nginx', ret)
         else:
             ret = rcc.run(payloads['reload_nginx'])
             if ret["channel_code"] != CHANNEL_SUCCESS:
-                return False, fmt.channel_error(ret, f"{prefix+6}: " + messages[prefix+6]), fmt.successful_payloads
+                return False, fmt.channel_error(ret, f"{prefix+7}: " + messages[prefix+7]), fmt.successful_payloads
             if ret["payload_code"] != SUCCESS_CODE:
-                return False, fmt.payload_error(ret, f"{prefix+7}: " + messages[prefix+7]), fmt.successful_payloads
+                return False, fmt.payload_error(ret, f"{prefix+8}: " + messages[prefix+8]), fmt.successful_payloads
             fmt.add_successful('reload_nginx', ret)
 
 

@@ -7,10 +7,10 @@ from cloudcix_primitives import nginxns
 
 # Run the following test scripts before this one:
 # 
-# * `tools/test_directorymain_primitive.py build /etc/netns/mynetns/cloudinit-metadata/10.0.0.3/v1` to ensure the directories needed
+# * `tools/test_directorymain_primitive.py build /etc/netns/mynetns/cloudcix-metadata/10.0.0.3/v1` to ensure the directories needed
 #   are in place.
 # * `tools/test_ns_primitive.py build mynetns to ensure the name space we want to run nginx in exists
-# * `tools/test_cidata_primitive.py build /etc/netns/mynetns/cloudinit-metadata/10.0.0.3/v1` to give the web server something to serve
+# * `tools/test_cidata_primitive.py build /etc/netns/mynetns/cloudcix-metadata/10.0.0.3/v1` to give the web server something to serve
 
 cmd = sys.argv[1]
 
