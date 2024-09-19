@@ -232,14 +232,6 @@ class PodnetErrorFormatter:
         self.successful_payloads[self.podnet_node] = list()
         self.message_list = list()
 
-    @property
-    def message_list(self):
-        return self.message_list
-
-    @property
-    def successful_payloads(self):
-        return self.successful_payloads
-
     def add_successful(self, payload_name, rcc_return=None):
         """
         Records a payload as having run successfully on this podnet node
@@ -305,7 +297,8 @@ class PodnetErrorFormatter:
         context.append("")
         for k in sorted(self.successful_payloads.keys()):
             context.append(f'{k}: ')
-            for payload in self.successful_payloads:
+            for payload in self.successful_payloads[k]:
+                import pdb; pdb.set_trace()
                 context.append(f'  {payload["payload_name"]}: ' )
                 if payload["rcc_return"] is not None:
                     context.append(f'    status: %s' % self.payload_channels['payload_status'] )
@@ -318,7 +311,7 @@ class PodnetErrorFormatter:
         return "\n".join(context)
 
     def _format_channel_error(self, rcc_return, msg):
-        msg = msg + "channel_code: %s\nchannel_message: %s\nchannel_error: %s" % (
+        msg = msg + "channel_code: %s\nchannel_message: %s\nchannel_error: %s\n\n" % (
             rcc_return['channel_code'],
             rcc_return['channel_error'],
             rcc_return['channel_message']
@@ -327,7 +320,7 @@ class PodnetErrorFormatter:
         return msg
 
     def _format_payload_error(self, rcc_return, msg):
-        msg = msg + "payload code: %s\n%s: %s\n%s: %s" % (
+        msg = msg + "payload code: %s\n%s: %s\n%s: %s\n\n" % (
             rcc_return['payload_code'],
             self.payload_channels['payload_error'],
             rcc_return['payload_error'],
