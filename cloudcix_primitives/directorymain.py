@@ -146,7 +146,6 @@ def read(path: str, config_file=None) -> Tuple[bool, Dict[str, Any], List[str]]:
         3231: f'Failed to connect to the enabled PodNet node for find_path payload: ',
         3232: f'Failed to run find path payload on the enabled PodNet. Payload exited with status ',
     }
-    retval = True
 
     status, config_data, msg = load_pod_config(config_file)
     if not status:
@@ -194,8 +193,8 @@ def read(path: str, config_file=None) -> Tuple[bool, Dict[str, Any], List[str]]:
     retval_disabled, msg_list_disabled, successful_payloads, data_dict = run_podnet(disabled, 3230, successful_payloads, data_dict)
 
     msg_list = list()
-    msg_list.append(msg_list_enabled)
-    msg_list.append(msg_list_disabled)
+    msg_list.extend(msg_list_enabled)
+    msg_list.extend(msg_list_disabled)
 
     if not (retval_enabled and retval_disabled):
         return False, data_dict, msg_list
