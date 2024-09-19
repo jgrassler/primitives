@@ -318,23 +318,85 @@ def read(
         3221: f'Failed to connect to the enabled PodNet for read_config payload: ',
         3222: f'Failed to run read_config payload on the enabled PodNet. Payload exited with status ',
         3223: f'Failed to connect to the enabled PodNet for find_process payload: ',
-        3223: f'Failed to run find_process payload on the enabled PodNet node. Payload exited with status ',
+        3224: f'Failed to run find_process payload on the enabled PodNet node. Payload exited with status ',
 
         3251: f'Failed to connect to the enabled PodNet for read_config payload: ',
         3252: f'Failed to run read_config payload on the enabled PodNet. Payload exited with status ',
         3253: f'Failed to connect to the enabled PodNet for find_process payload: ',
-        3253: f'Failed to run find_process payload on the enabled PodNet node. Payload exited with status ',
+        3254: f'Failed to run find_process payload on the enabled PodNet node. Payload exited with status ',
     }
 
     # Default config_file if it is None
     if config_file is None:
         config_file = '/opt/robot/config.json'
 
+    status, config_data, msg = load_pod_config(config_file)
+    if not status:
+      if config_data['raw'] is None:
+          return False, None, msg
+      else:
+          return False, msg + "\nJSON dump of raw configuration:\n" + json.dumps(config_data['raw'],
+              indent=2,
+              sort_keys=True)
+    enabled = config_data['processed']['enabled']
+    disabled = config_data['processed']['disabled']
+
+    def run_podnet(podnet_node, prefix, successful_payloads, data_dict):
+        retval = True
+        data_dict[podnet_node] = {}
+
+        rcc = SSHCommsWrapper(comms_ssh, podnet_node, 'robot')
+        fmt = PodnetErrorFormatter(
+            config_file,
+            podnet_node,
+            podnet_node == enabled,
+            {'payload_message': 'STDOUT', 'payload_error': 'STDERR'},
+            successful_payloads
+        )
 
 
+        nginx_config_path_grepsafe = nginx_config_path.replace('.', '\.')
 
-    # define payloads
-    read_config_payload = f'cat {nginx_config_path}'
-    find_process_payload = f'ps auxw | grep nginx | grep {nginx_config_path}'
+        # define payloads
+        payloads = {
+            'find_process': "ps auxw | grep nginx | grep -v grep | grep '%s' | awk '{print $2}'" % nginx_config_path_grepsafe,
+            'read_config': f'cat {nginx_config_path}'
+        }
 
-    return retval, data_dict, message_list
+        ret = rcc.run(payloads['read_config'])
+        if ret["channel_code"] != CHANNEL_SUCCESS:
+            retval = False
+            fmt.store_channel_error(ret, f"{prefix+1}: " + messages[prefix+1])
+        if ret["payload_code"] != SUCCESS_CODE:
+            retval = False
+            fmt.store_payload_error(ret, f"{prefix+2}: " + messages[prefix+2])
+        else:
+            data_dict[podnet_node]['config'] = ret["payload_message"].strip()
+            fmt.add_successful('read_config', ret)
+
+        ret = rcc.run(payloads['find_process'])
+        if ret["channel_code"] != CHANNEL_SUCCESS:
+            retval = False
+            fmt.store_channel_error(ret, f"{prefix+3}: " + messages[prefix+3])
+        if ret["payload_code"] != SUCCESS_CODE:
+            retval = False
+            fmt.store_payload_error(ret, f"{prefix+4}: " + messages[prefix+4])
+        else:
+            data_dict[podnet_node]['pid'] = ret["payload_message"].strip()
+            fmt.add_successful('find_process', ret)
+
+        return retval, fmt.message_list, fmt.successful_payloads, data_dict
+
+    retval_enabled, msg_list_enabled, successful_payloads, data_dict = run_podnet(enabled, 3220, {}, {})
+
+    retval_disabled, msg_list_disabled, successful_payloads, data_dict = run_podnet(disabled, 3250, successful_payloads, data_dict)
+
+    msg_list = list()
+    msg_list.extend(msg_list_enabled)
+    msg_list.extend(msg_list_disabled)
+
+    if not (retval_enabled and retval_disabled):
+        return False, data_dict, msg_list
+    else:
+       return True, data_dict, (messages[1200])
+
