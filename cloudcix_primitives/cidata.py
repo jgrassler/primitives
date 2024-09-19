@@ -81,10 +81,10 @@ def build(
         3023: f'3023: Failed to connect to the enabled PodNet for create_userdata payload: ',
         3024: f'3024: Failed to run create_userdata payload on the enabled PodNet. Payload exited with status ',
 
-        3031: f'3021: Failed to connect to the enabled PodNet for create_metadata payload: ',
-        3032: f'3022: Failed to run create_metadata payload on the enabled PodNet. Payload exited with status ',
-        3033: f'3023: Failed to connect to the enabled PodNet for create_userdata payload: ',
-        3034: f'3024: Failed to run create_userdata payload on the enabled PodNet. Payload exited with status ',
+        3031: f'3021: Failed to connect to the disabled PodNet for create_metadata payload: ',
+        3032: f'3022: Failed to run create_metadata payload on the disabled PodNet. Payload exited with status ',
+        3033: f'3023: Failed to connect to the disabled PodNet for create_userdata payload: ',
+        3034: f'3024: Failed to run create_userdata payload on the disabled PodNet. Payload exited with status ',
     }
 
     metadata_json = json.dumps(
@@ -194,10 +194,10 @@ def scrub(
         3123: f'Failed to connect to the enabled PodNet for remove_userdata payload: ',
         3123: f'Failed to run remove_userdata payload on the enabled PodNet. Payload exited with status ',
 
-        3131: f'Failed to connect to the enabled PodNet for remove_metadata payload: ',
-        3132: f'Failed to run remove_metadata payload on the enabled PodNet. Payload exited with status ',
-        3133: f'Failed to connect to the enabled PodNet for remove_userdata payload: ',
-        3133: f'Failed to run remove_userdata payload on the enabled PodNet. Payload exited with status ',
+        3131: f'Failed to connect to the disabled PodNet for remove_metadata payload: ',
+        3132: f'Failed to run remove_metadata payload on the disabled PodNet. Payload exited with status ',
+        3133: f'Failed to connect to the disabled PodNet for remove_userdata payload: ',
+        3133: f'Failed to run remove_userdata payload on the disabled PodNet. Payload exited with status ',
     }
 
     # Default config_file if it is None
@@ -316,10 +316,10 @@ def read(
         3223: f'Failed to connect to the enabled PodNet for read_userdata payload: ',
         3223: f'Failed to read_userdata payload on the enabled PodNet. Payload exited with status ',
 
-        3231: f'Failed to connect to the enabled PodNet for read_metadata payload: ',
-        3232: f'Failed to run read_metadata payload on the enabled PodNet. Payload exited with status ',
-        3233: f'Failed to connect to the enabled PodNet for read_userdata payload: ',
-        3233: f'Failed to read_userdata payload on the enabled PodNet. Payload exited with status ',
+        3231: f'Failed to connect to the disabled PodNet for read_metadata payload: ',
+        3232: f'Failed to run read_metadata payload on the disabled PodNet. Payload exited with status ',
+        3233: f'Failed to connect to the disabled PodNet for read_userdata payload: ',
+        3233: f'Failed to read_userdata payload on the disabled PodNet. Payload exited with status ',
     }
 
     # Default config_file if it is None

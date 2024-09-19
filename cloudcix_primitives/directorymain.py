@@ -48,8 +48,9 @@ def build(path: str, config_file=None) -> Tuple[bool, str]:
         1000: f'Successfully created directory {path} on both PodNet nodes.',
         3021: f'Failed to connect to the enabled PodNet node for create_path payload: ',
         3022: f'Failed to run create path payload on the enabled PodNet. Payload exited with status ',
-        3031: f'Failed to connect to the enabled PodNet node for create_path payload: ',
-        3032: f'Failed to run create path payload on the enabled PodNet. Payload exited with status ',
+
+        3031: f'Failed to connect to the disabled PodNet node for create_path payload: ',
+        3032: f'Failed to run create path payload on the disabled PodNet. Payload exited with status ',
     }
 
     # Default config_file if it is None
@@ -143,8 +144,9 @@ def read(path: str, config_file=None) -> Tuple[bool, Dict[str, Any], List[str]]:
         1200: f'Successfully read directory {path} on both podnet nodes.',
         3221: f'Failed to connect to the enabled PodNet node for find_path payload: ',
         3222: f'Failed to run find path payload on the enabled PodNet. Payload exited with status ',
-        3231: f'Failed to connect to the enabled PodNet node for find_path payload: ',
-        3232: f'Failed to run find path payload on the enabled PodNet. Payload exited with status ',
+
+        3231: f'Failed to connect to the disabled PodNet node for find_path payload: ',
+        3232: f'Failed to run find path payload on the disabled PodNet. Payload exited with status ',
     }
 
     status, config_data, msg = load_pod_config(config_file)
@@ -226,9 +228,10 @@ def scrub(path: str, config_file=None) -> Tuple[bool, str]:
     messages = {
         1000: f'Successfully removed directory {path}',
         3121: f'Failed to connect to the enabled PodNet node for delete_path payload: ',
-        3122: f'Failed to run delete path payload on the enabled PodNet. Payload exited with status ',
-        3131: f'Failed to connect to the enabled PodNet node for delete_path payload: ',
-        3132: f'Failed to run delete path payload on the enabled PodNet. Payload exited with status ',
+        3122: f'Failed to run delete_path payload on the enabled PodNet. Payload exited with status ',
+
+        3131: f'Failed to connect to the disabled PodNet node for delete_path payload: ',
+        3132: f'Failed to run delete_path payload on the disabled PodNet. Payload exited with status ',
     }
 
     # Default config_file if it is None
