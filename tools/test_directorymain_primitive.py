@@ -7,7 +7,7 @@ from cloudcix_primitives import directorymain
 
 cmd = sys.argv[1]
 
-dir_name = "/etc/netns/mynetns/10.0.0.3/v1"
+dir_name = "/etc/netns/mynetns/cloudinit-metadata/10.0.0.3/v1"
 
 if len(sys.argv) > 2:
     dir_name = sys.argv[2]

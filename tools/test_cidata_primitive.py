@@ -11,7 +11,7 @@ from cloudcix_primitives import cidata
 
 cmd = sys.argv[1]
 
-domain_path = '/etc/netns/mynetns/10.0.0.3/v1'
+domain_path = '/etc/netns/mynetns/cloudinit-metadata/10.0.0.3/v1'
 
 metadata = {
   "instance-id": "mynetns_123",
