@@ -210,7 +210,7 @@ def scrub(
         type: tuple
     """
 
-    nginx_config_path = '/etc/netns/{namespace}/nginx.conf'
+    nginx_config_path = f'/etc/netns/{namespace}/nginx.conf'
 
     # Define message
     messages = {
@@ -221,35 +221,85 @@ def scrub(
         3122: f'Failed to connect to the enabled PodNet for stop_nginx payload: ',
         3123: f'Failed to run stop_nginx payload on the enabled PodNet. Payload exited with status ',
         3124: f'Failed to connect to the enabled PodNet for remove_config payload: ',
-        3125: f'Failed to run delete_config payload on the enabled PodNet. Payload exited with status ',
+        3125: f'Failed to run remove_config payload on the enabled PodNet. Payload exited with status ',
 
         3150: f'Failed to connect to the disabled PodNet for find_proces payload: ',
         3151: f'Failed to run find_process payload on the disabled PodNet. Payload exited with status ',
         3152: f'Failed to connect to the disabled PodNet for stop_nginx payload: ',
         3153: f'Failed to run stop_nginx payload on the disabled PodNet. Payload exited with status ',
         3154: f'Failed to connect to the disabled PodNet for remove_config payload: ',
-        3155: f'Failed to run delete_config payload on the disabled PodNet. Payload exited with status ',
+        3155: f'Failed to run remove_config payload on the disabled PodNet. Payload exited with status ',
     }
 
     # Default config_file if it is None
     if config_file is None:
         config_file = '/opt/robot/config.json'
 
+    status, config_data, msg = load_pod_config(config_file)
+    if not status:
+      if config_data['raw'] is None:
+          return False, msg
+      else:
+          return False, msg + "\nJSON dump of raw configuration:\n" + json.dumps(config_data['raw'],
+              indent=2,
+              sort_keys=True)
+    enabled = config_data['processed']['enabled']
+    disabled = config_data['processed']['disabled']
+
+    def run_podnet(podnet_node, prefix, successful_payloads):
+        rcc = SSHCommsWrapper(comms_ssh, podnet_node, 'robot')
+        fmt = PodnetErrorFormatter(
+            config_file,
+            podnet_node,
+            podnet_node == enabled,
+            {'payload_message': 'STDOUT', 'payload_error': 'STDERR'},
+            successful_payloads
+        )
+
+        nginx_config_path_grepsafe = nginx_config_path.replace('.', '\.')
+
+        payloads = {
+            'find_process':  "ps auxw | grep nginx | grep -v grep | grep '%s' | awk '{print $2}'" % nginx_config_path_grepsafe,
+            'remove_config': f'rm -f {nginx_config_path}',
+            'stop_nginx':    'kill -TERM %s',
+        }
+
+        ret = rcc.run(payloads['find_process'])
+        if ret["channel_code"] != CHANNEL_SUCCESS:
+            return False, fmt.channel_error(ret, f"{prefix+3}: " + messages[prefix+3]), fmt.successful_payloads
+        stop_nginx = False
+        if ret["payload_code"] == SUCCESS_CODE:
+            if ret["payload_message"] != "":
+                # No need to start nginx if it runs already
+                stop_nginx = True
+                payloads['stop_nginx'] = payloads['stop_nginx'] % ret['payload_message'].strip()
+        fmt.add_successful('find_process', ret)
+
+        if stop_nginx:
+            ret = rcc.run(payloads['stop_nginx'])
+            if ret["channel_code"] != CHANNEL_SUCCESS:
+                return False, fmt.channel_error(ret, f"{prefix+4}: " + messages[prefix+4]), fmt.successful_payloads
+            if ret["payload_code"] != SUCCESS_CODE:
+                return False, fmt.payload_error(ret, f"{prefix+5}: " + messages[prefix+5]), fmt.successful_payloads
+            fmt.add_successful('stop_nginx', ret)
+
+        ret = rcc.run(payloads['remove_config'])
+        if ret["channel_code"] != CHANNEL_SUCCESS:
+            return False, fmt.channel_error(ret, f"{prefix+6}: " + messages[prefix+6]), fmt.successful_payloads
+        if ret["payload_code"] != SUCCESS_CODE:
+            return False, fmt.payload_error(ret, f"{prefix+7}: " + messages[prefix+7]), fmt.successful_payloads
+        fmt.add_successful('remove_config', ret)
+
+        return True, "", fmt.successful_payloads
 
 
+    status, msg, successful_payloads = run_podnet(enabled, 3020, {})
+    if status == False:
+        return status, msg
 
-    # define payloads
-    #   'find_process': "ps auxw | grep nginx | grep '%s' | awk '{print $2}'" % nginx_config_path,
-    find_process_payload = f'ps auxw | grep nginx | grep {nginx_config_path}'
-    delete_config_payload = f'rm -f {nginx_config_path}'
-    stop_nginx_payload = 'kill -TERM %s'
-
-    # call rcc comms_ssh on enabled PodNet to find existing process
-    ret = comms_ssh(
-        host_ip=enabled,
-        payload=find_process_payload,
-        username='robot',
-    )
+    status, msg, successful_payloads = run_podnet(disabled, 3050, successful_payloads)
+    if status == False:
+        return status, msg
 
     return True, messages[1100]
 
@@ -319,11 +369,13 @@ def read(
         3222: f'Failed to run read_config payload on the enabled PodNet. Payload exited with status ',
         3223: f'Failed to connect to the enabled PodNet for find_process payload: ',
         3224: f'Failed to run find_process payload on the enabled PodNet node. Payload exited with status ',
+        3225: f'find_process payload on the enabled PodNet node did not find a nginx process. Payload exited with status ',
 
         3251: f'Failed to connect to the enabled PodNet for read_config payload: ',
         3252: f'Failed to run read_config payload on the enabled PodNet. Payload exited with status ',
         3253: f'Failed to connect to the enabled PodNet for find_process payload: ',
         3254: f'Failed to run find_process payload on the enabled PodNet node. Payload exited with status ',
+        3255: f'find_process payload on the disabled PodNet node did not find a nginx process. Payload exited with status ',
     }
 
     # Default config_file if it is None
@@ -382,8 +434,12 @@ def read(
             retval = False
             fmt.store_payload_error(ret, f"{prefix+4}: " + messages[prefix+4])
         else:
-            data_dict[podnet_node]['pid'] = ret["payload_message"].strip()
-            fmt.add_successful('find_process', ret)
+            pid = ret["payload_message"].strip()
+            if pid == "":
+                fmt.store_payload_error(ret, f"{prefix+5}: " + messages[prefix+5])
+            else:
+                data_dict[podnet_node]['pid'] = pid
+                fmt.add_successful('find_process', ret)
 
         return retval, fmt.message_list, fmt.successful_payloads, data_dict
 
