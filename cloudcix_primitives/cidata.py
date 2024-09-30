@@ -319,7 +319,7 @@ def read(
         3231: f'Failed to connect to the disabled PodNet for read_metadata payload: ',
         3232: f'Failed to run read_metadata payload on the disabled PodNet. Payload exited with status ',
         3233: f'Failed to connect to the disabled PodNet for read_userdata payload: ',
-        3233: f'Failed to read_userdata payload on the disabled PodNet. Payload exited with status ',
+        3234: f'Failed to read_userdata payload on the disabled PodNet. Payload exited with status ',
     }
 
     # Default config_file if it is None
