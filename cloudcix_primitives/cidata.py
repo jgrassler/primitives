@@ -370,7 +370,7 @@ def read(
         ret = rcc.run(payloads['read_userdata'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
             retval = False
-            fmt.store_channel_error(ret, f"{prefix+2} : " + messages[prefix+2])
+            fmt.store_channel_error(ret, f"{prefix+3} : " + messages[prefix+3])
         if ret["payload_code"] != SUCCESS_CODE:
             retval = False
             fmt.store_payload_error(ret, f"{prefix+3} : " + messages[prefix+3])
