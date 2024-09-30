@@ -86,7 +86,7 @@ def build(path: str, config_file=None) -> Tuple[bool, str]:
         if ret["channel_code"] != CHANNEL_SUCCESS:
             return False, fmt.channel_error(ret, f"{prefix+1}: " + messages[prefix+1]), fmt.successful_payloads
         if ret["payload_code"] != SUCCESS_CODE:
-            return False, fmt.payload_error(ret, f"{prefix+1}: " + messages[prefix+1]), fmt.successful_payloads
+            return False, fmt.payload_error(ret, f"{prefix+2}: " + messages[prefix+2]), fmt.successful_payloads
         fmt.add_successful('create_path', ret)
 
         return True, "", fmt.successful_payloads
