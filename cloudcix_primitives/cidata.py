@@ -373,7 +373,7 @@ def read(
             fmt.store_channel_error(ret, f"{prefix+3} : " + messages[prefix+3])
         if ret["payload_code"] != SUCCESS_CODE:
             retval = False
-            fmt.store_payload_error(ret, f"{prefix+3} : " + messages[prefix+3])
+            fmt.store_payload_error(ret, f"{prefix+4} : " + messages[prefix+4])
         else:
             data_dict[podnet_node]['userdata'] = ret["payload_message"].strip()
             fmt.add_successful('read_userdata', ret)
