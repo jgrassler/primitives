@@ -197,7 +197,7 @@ def scrub(
         3131: f'Failed to connect to the disabled PodNet for remove_metadata payload: ',
         3132: f'Failed to run remove_metadata payload on the disabled PodNet. Payload exited with status ',
         3133: f'Failed to connect to the disabled PodNet for remove_userdata payload: ',
-        3133: f'Failed to run remove_userdata payload on the disabled PodNet. Payload exited with status ',
+        3134: f'Failed to run remove_userdata payload on the disabled PodNet. Payload exited with status ',
     }
 
     # Default config_file if it is None
