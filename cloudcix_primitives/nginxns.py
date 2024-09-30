@@ -220,7 +220,6 @@ def scrub(
         1100: f'1100: Successfully stopped nginx process and deleted {nginx_config_path}.',
 
         3121: f'Failed to connect to the enabled PodNet for find_proces payload: ',
-        3121: f'Failed to run find_process payload on the enabled PodNet. Payload exited with status ',
         3122: f'Failed to connect to the enabled PodNet for stop_nginx payload: ',
         3123: f'Failed to run stop_nginx payload on the enabled PodNet. Payload exited with status ',
         3124: f'Failed to connect to the enabled PodNet for remove_config payload: ',
