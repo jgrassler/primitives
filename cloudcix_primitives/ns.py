@@ -434,13 +434,13 @@ def read(
         3256: f'Failed to connect to the disabled PodNet for find_forwardv6_payload: ',
         3257: f'Failed to run find_forwardv6 payload on disabled PodNet. Payload exited with status ',
         3258: f'Unexpected value for sysctl net.ipv6.conf.all.forwarding on disabled PodNet: ',
-        3259: f'Failed to connect to the enabled PodNet for find_lo_status payload: ',
+        3259: f'Failed to connect to the disabled PodNet for find_lo_status payload: ',
         3260: f'Failed to run payload find_lo_status. Payload exited with status ',
-        3261: f'Failed to connect to the enabled PodNet for find_lo1 payload: ',
+        3261: f'Failed to connect to the disabled PodNet for find_lo1 payload: ',
         3262: f'Failed to run payload find_lo1. Payload exited with status ',
-        3263: f'Failed to connect to the enabled PodNet for find_lo1_status payload: ',
+        3263: f'Failed to connect to the disabled PodNet for find_lo1_status payload: ',
         3264: f'Failed to run payload find_lo1_status. Payload exited with status ',
-        3265: f'Failed to connect to the enabled PodNet for find_lok_address payload: ',
+        3265: f'Failed to connect to the disabled PodNet for find_lok_address payload: ',
         3266: f'Failed to run payload find_lo1_address. Payload exited with status ',
     }
 
