@@ -228,7 +228,6 @@ def scrub(
         3127: f'Failed to run remove_pidfile payload on the enabled PodNet. Payload exited with status ',
 
         3151: f'Failed to connect to the disabled PodNet for find_proces payload: ',
-        3151: f'Failed to run find_process payload on the disabled PodNet. Payload exited with status ',
         3152: f'Failed to connect to the disabled PodNet for stop_nginx payload: ',
         3153: f'Failed to run stop_nginx payload on the disabled PodNet. Payload exited with status ',
         3154: f'Failed to connect to the disabled PodNet for remove_config payload: ',
