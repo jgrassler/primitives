@@ -423,7 +423,7 @@ def read(
         3232: f'Failed to run payload find_lo1. Payload exited with status ',
         3233: f'Failed to connect to the enabled PodNet for find_lo1_status payload: ',
         3234: f'Failed to run payload find_lo1_status. Payload exited with status ',
-        3235: f'Failed to connect to the enabled PodNet for find_lok_address payload: ',
+        3235: f'Failed to connect to the enabled PodNet for find_lo1_address payload: ',
         3236: f'Failed to run payload find_lo1_address. Payload exited with status ',
 
         3251: f'Failed to connect to the disabled PodNet for find_namespace_payload: ',
@@ -440,7 +440,7 @@ def read(
         3262: f'Failed to run payload find_lo1. Payload exited with status ',
         3263: f'Failed to connect to the enabled PodNet for find_lo1_status payload: ',
         3264: f'Failed to run payload find_lo1_status. Payload exited with status ',
-        3265: f'Failed to connect to the enabled PodNet for find_lok_address payload: ',
+        3265: f'Failed to connect to the enabled PodNet for find_lo1_address payload: ',
         3266: f'Failed to run payload find_lo1_address. Payload exited with status ',
     }
 
