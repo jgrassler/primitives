@@ -106,3 +106,38 @@ supported verbs:
     - storage: str
     - size: int
 
+## cloudinit_kvm
+Primitive for Cloud-init VM on KVM hosts
+
+supported verbs:
+
+- build:
+    - cloudimage: str
+    - cpu: int
+    - domain: str
+    - domain_path: str
+    - gateway_interface: dict
+    - host: str
+    - primary_storage: str
+    - ram: int
+    - size: int
+    - secondary_interfaces: optional list
+    - secondary_storages: optional list
+
+- read:
+    - domain: str
+    - host: str
+
+- quiesce:
+    - domain: str
+    - host: str
+
+- restart:
+    - domain: str
+    - host: str
+
+- scrub:
+    - domain: str
+    - domain_path: str
+    - host: str
+    - primary_storage: str

@@ -282,3 +282,32 @@ class InvalidNATPublic(BaseException):
 
     def __str__(self):
         return f'Invalid NATs public field: {self.obj}, NAT public address cannot be RFC1918'
+
+
+class InvalidKVMInterfaceItem(BaseException):
+    def __init__(self, obj):
+        super().__init__(obj)
+        self.obj = obj
+
+    def __str__(self):
+        return f'Invalid KVM Interface, field: {self.obj} is missing in the Interface object'
+
+
+class InvalidKVMInterfaceMacAddress(BaseException):
+    def __init__(self, obj):
+        super().__init__(obj)
+        self.obj = obj
+
+    def __str__(self):
+        return f'Invalid KVM Interface property mac_address: {self.obj}, The property is not a valid Mac Address'
+
+
+class InvalidKVMInterfaceVlanBridge(BaseException):
+    def __init__(self, obj):
+        super().__init__(obj)
+        self.obj = obj
+
+    def __str__(self):
+        msg = f'Invalid KVM Interface property vlan_bridge {self.obj} '
+        msg += 'The "vlan_bridge" value must be of format `br1234`.'
+        return msg
