@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 # libs
 from jinja2 import Environment, meta, FileSystemLoader, Template
-
 # local
 
 
@@ -15,6 +14,7 @@ __all__ = [
     'JINJA_ENV',
     'primitives_directory',
     'load_pod_config',
+    'PyLXDWrapper',
     'SSHCommsWrapper',
     'PodnetErrorFormatter',
     'HostErrorFormatter',
@@ -135,6 +135,41 @@ def load_pod_config(config_file=None, prefix=4000) -> Tuple[bool, Dict[str, Opti
     return True, config_data, f'{prefix + 10}: {messages[10]}'
 
 
+class LXDCommsWrapper:
+
+    def __init__(self, comm_function, endpoint_url, verify=True, project=None):
+        """
+        Wrap a pylxd client function to remember parameters that do not change over a set of multiple invocations.
+        :param comm_function: RCC function to call, e.g. cloudcix.rcc.comms_lxd()
+        :param endpoint_url: Target host for the LXD functions
+        :param verify (optional): |
+            - A boolean, indicates if the verify the TLS certificate.
+            - Defaults to True
+        :param project (optional): Name of the LXD project to interact with 
+        """
+        self.comm_function = comm_function
+        self.endpoint_url = endpoint_url
+        self.verify = verify
+        self.project = project
+
+    def run(self, cli, api=False, **kwargs):
+        """
+        Runs a command through RCC.
+        :param cli: The LXD service for the request and the method to run
+        :param api (optional): |
+            This attribute provides tree traversal syntax to LXD’s REST API for lower-level interaction.
+            Defaults to False
+        """
+        return self.comm_function(
+            endpoint_url=self.endpoint_url,
+            cli=cli,
+            project=self.project,
+            verify=self.verify,
+            api=api,
+            **kwargs,
+        )
+
+
 class SSHCommsWrapper:
     """
     Wraps RCC (Reliable Communications Channel) function to remember parameters
@@ -171,19 +206,14 @@ class PodnetErrorFormatter:
         :param config_file: Config file the PodNet configuration originates from.
         :param podnet_node: PodNet node the errors occur on.
         :param enabled: Boolean status code indicating whether podnet_node is enabled
-        :param payload_channels: dict assigning names to the payload_error and
-                                 payload_message keys returned by RCC. For
-                                 rcc_ssh you might use 
-                                 {'payload_message': 'STDOUT', 'payload_error':
-                                 'STDERR'}, for instance. These names will be
-                                 used by format_payload_error(). and
-                                 store_payload_error().
-        :param successful_payloads: dict keyed by PodNet node (may be empty).
-                                    Each key contains a list of successful
-                                    payload names as created by
-                                    add_successful() this can be used to carry
-                                    over successful payloads from a different
-                                    instance of this class.
+        :param payload_channels: |
+            dict assigning names to the payload_error and payload_message keys returned by RCC. For
+            rcc_ssh you might use {'payload_message': 'STDOUT', 'payload_error': 'STDERR'}, for
+            instance. These names will be used by format_payload_error(). and store_payload_error().
+        :param successful_payloads: |
+            dict keyed by PodNet node (may be empty).Each key contains a list of successful payload names
+            as created by add_successful() this can be used to carry over successful payloads from a
+            different instance of this class.
         """
         if successful_payloads is None:
             successful_payloads = {}
@@ -205,9 +235,8 @@ class PodnetErrorFormatter:
         """
         self.successful_payloads[self.podnet_node].append({
             'payload_name': payload_name,
-            'rcc_return': rcc_return
-        }
-        )
+            'rcc_return': rcc_return,
+        })
 
     def channel_error(self, rcc_return, msg_index):
         """
@@ -289,20 +318,15 @@ class HostErrorFormatter:
     def __init__(self, host, payload_channels, successful_payloads=None):
         """
         Creates a new errorFormatter.
-        :param host: Local/KVM/HyperV/Ceph host the errors occur on.
-        :param payload_channels: dict assigning names to the payload_error and
-                                 payload_message keys returned by RCC. For
-                                 rcc_ssh you might use
-                                 {'payload_message': 'STDOUT', 'payload_error':
-                                 'STDERR'}, for instance. These names will be
-                                 used by format_payload_error(). and
-                                 store_payload_error().
-        :param successful_payloads: dict keyed by kvm host (may be empty).
-                                    Each key contains a list of successful
-                                    payload names as created by
-                                    add_successful() this can be used to carry
-                                    over successful payloads from a different
-                                    instance of this class.
+        :param host: Local/KVM/HyperV/Ceph/LXD host the errors occur on.
+        :param payload_channels: |
+            dict assigning names to the payload_error and payload_message keys returned by RCC.
+            For rcc_ssh you might use {'payload_message': 'STDOUT', 'payload_error': 'STDERR'},
+            for instance. These names will be used by format_payload_error() and store_payload_error().
+        :param successful_payloads: |
+            dict keyed by kvm host (may be empty). Each key contains a list of successful payload names
+            as created by add_successful() this can be used to carry over successful payloads from a
+            different instance of this class.
         """
         self.host = host
         self.message_list = list()
@@ -371,3 +395,4 @@ class HostErrorFormatter:
         msg += f"{rcc_return['payload_error']}\n{self.payload_channels['payload_message']}: "
         msg += f"{rcc_return['payload_message']}\n"
         return msg
+
