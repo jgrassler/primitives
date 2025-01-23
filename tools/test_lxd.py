@@ -7,12 +7,9 @@ from cloudcix_primitives import lxd
 
 # Run the following test scripts before this one:
 #
-# * `tools/test_directorymain_primitive.py build /etc/netns/mynetns` to ensure the directories needed
-#   are in place.
-# * `tools/test_ns_primitive.py build mynetns to ensure the name space we want to run dhcpns in exists
-# * `tools/test_vlanifns_primitive.py build {vlan} to ensure vlan tagged interface exists on podnet
-# * `tools/test_bridge_lxd.py build br4000 to ensure the LXD bridge exists to connect to the vlan tagged interface
-# * `tools/test_bridge_kvm_primitive.py build {vlan} to ensure vlan tagged interface exists on KVM Host
+# * `tools/test_ns.py build mynetns to ensure the name space we want exists
+# * `tools/test_vlanif_ns.py build {vlan} to ensure vlan tagged interface exists on podnet
+# * `tools/test_bridge_lxd.py build br4000 to ensure the LXD brißßÍdge exists to connect to the vlan tagged interface
 
 cmd = sys.argv[1]
 
@@ -112,16 +109,7 @@ if cmd == 'build':
         secondary_interfaces=secondary_interfaces,
         verify_lxd_certs=verify_lxd_certs,
     )
-if cmd == 'read':
-    status, data, msg = lxd.read(
-        endpoint_url=endpoint_url,
-        project=project,
-        name=name,
-        instance_type=instance_type,
-        verify_lxd_certs=verify_lxd_certs,
-    )
-
-if cmd == 'quiesce':
+elif cmd == 'quiesce':
     status, msg = lxd.quiesce(
         endpoint_url=endpoint_url,
         project=project,
@@ -129,7 +117,15 @@ if cmd == 'quiesce':
         instance_type=instance_type,
         verify_lxd_certs=verify_lxd_certs,
     )
-if cmd == 'restart':
+elif cmd == 'read':
+    status, data, msg = lxd.read(
+        endpoint_url=endpoint_url,
+        project=project,
+        name=name,
+        instance_type=instance_type,
+        verify_lxd_certs=verify_lxd_certs,
+    )
+elif cmd == 'restart':
     status, msg = lxd.restart(
         endpoint_url=endpoint_url,
         project=project,
@@ -137,8 +133,7 @@ if cmd == 'restart':
         instance_type=instance_type,
         verify_lxd_certs=verify_lxd_certs,
     )
-
-if cmd == 'scrub':
+elif cmd == 'scrub':
     status, msg = lxd.scrub(
         endpoint_url=endpoint_url,
         project=project,
@@ -146,6 +141,10 @@ if cmd == 'scrub':
         instance_type=instance_type,
         verify_lxd_certs=verify_lxd_certs,
     )
+else:
+   print(f"Unknown command: {cmd}")
+   sys.exit(1)
+
 
 print("Status: %s" %  status)
 print()

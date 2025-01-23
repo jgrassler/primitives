@@ -1,19 +1,25 @@
 """
 Primitive for Virtual Machine Backup on HyperV hosts
 """
+# stdlib
+from typing import Tuple
+# lib
+# local
+
+__all__ = [
+    'build',
+    'scrub',
+    'read',
+]
 
 
-def build():
+def build() -> Tuple[bool, str]:
     return(False, 'Not Implemted')
 
 
-def scrub():
-    return(False, 'Not Implemted')
+def read() -> Tuple[bool, dict, str]:
+    return(False, {}, 'Not Implemted')
 
 
-def updatequiesced():
-    return(False, 'Not Implemted')
-
-
-def updaterunning():
+def scrub() -> Tuple[bool, str]:
     return(False, 'Not Implemted')
