@@ -20,7 +20,7 @@
 
 ### geo_b_firewall_ns (build, read)
 
-### external_firewall_ns (build, read)
+### prvt2prvt_firewall_ns (build, read)
 
 ### vpns2s_firewall_ns (build, read)
 
