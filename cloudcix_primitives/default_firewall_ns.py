@@ -2,7 +2,6 @@
 from typing import Tuple
 # lib
 # local
-#from cloudcix_primitives.utils import write_rule
 
 
 __all__ = [
@@ -15,6 +14,7 @@ __all__ = [
 def build(
         namespace: str,
         public_bridge: str,
+        rules=None,
         config_file=None,
 ) -> Tuple[bool, str]:
     """
@@ -106,6 +106,74 @@ def build(
     # Default config_file if it is None
     if config_file is None:
         config_file = '/opt/robot/config.json'
+
+    rules = {
+        # INPUT
+        f'ip netns exec {namespace} nft add rule inet FILTER INPUT '
+        f'ct state established,related accept',
+
+        f'ip netns exec {namespace} nft add rule inet FILTER INPUT '
+        f'icmp type { echo-reply, destination-unreachable, echo-request, time-exceeded } accept',
+
+        f'ip netns exec {namespace} nft add rule inet FILTER INPUT '
+        f'icmpv6 type { echo-request, mld-listener-query, nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert } accept',
+
+        f'ip netns exec {namespace} nft add rule inet FILTER INPUT '
+        f'meta l4proto { tcp, udp } th dport 53 accept',
+
+        f'ip netns exec {namespace} nft add rule inet FILTER INPUT '
+        f'udp dport {500, 4500} accept',
+
+        f'ip netns exec {namespace} nft add rule inet FILTER INPUT '
+        f'ip protocol esp accept',
+
+        # PREROUTING
+        f'ip netns exec {namespace} nft add rule inet FILTER PREROUTING '
+        'ct state established,related accept',
+
+        f'ip netns exec {namespace} nft add rule inet FILTER PREROUTING '
+        f'iifname {namespace}.{public_bridge} jump GEO_IN_ALLOW',
+
+        f'ip netns exec ns1100 nft add rule inet FILTER PREROUTING '
+        f'iifname {namespace}.{public_bridge} jump GEO_IN_BLOCK',
+
+
+        # POSTROUTING
+        f'ip netns exec {namespace} nft add rule inet FILTER POSTROUTING '
+        f'ct state established,related accept',
+
+        f'ip netns exec {namespace} nft add rule inet FILTER POSTROUTING '
+        f'oifname {namespace}.{public_bridge} jump GEO_OUT_ALLOW',
+
+        f'ip netns exec {namespace} nft add rule inet FILTER POSTROUTING '
+        f'oifname {namespace}.{public_bridge} jump GEO_OUT_BLOCK',
+
+        # FORWARD
+        f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
+        f'ct state established,related accept',
+
+        f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
+        f'iifname @PRIVATE oifname ns1100.br-B1 jump PROJECT_OUT',
+
+        f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
+        f'iifname ns1100.br-B1 oifname @PRIVATE jump PROJECT_IN',
+
+        f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
+        f'iifname @PRIVATE oifname @S2S_TUNNEL jump VPNS2S',
+
+        f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
+        f'iifname @S2S_TUNNEL oifname @PRIVATE jump VPNS2S',
+
+        f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
+        f'iifname @PRIVATE oifname @DYN_TUNNEL jump VPNDYN',
+
+        f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
+        f'iifname @DYN_TUNNEL oifname @PRIVATE jump VPNDYN',
+
+        f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
+        f'iifname @PRIVATE oifname @PRIVATE jump PRVT_2_PRVT',
+
+    }
 
     status, config_data, msg = load_pod_config(config_file)
     if not status:
@@ -263,16 +331,15 @@ def build(
                 return False, fmt.payload_error(ret, f"{prefix+22}: " + messages[prefix+22] % {'payload': payload, 'chain': chain}), fmt.successful_payloads
             fmt.add_successful('create_user_chain %s' % chain, ret)
 
-#        for rule in rules:
-#            payload = write_rule(rule)
-#            ret = rcc.run(payload)
-#            if ret["channel_code"] != CHANNEL_SUCCESS:
-#                return False, fmt.channel_error(ret, f"{prefix+21}: " + messages[prefix+21] % {'payload': payload}), fmt.successful_payloads
-#            if ret["payload_code"] != SUCCESS_CODE:
-#                return False, fmt.payload_error(ret, f"{prefix+22}: " + messages[prefix+22] % {'payload': payload}), fmt.successful_payloads
-#            fmt.add_successful('create_rule (%s)' % payload, ret)
-#
-#        return True, "", fmt.successful_payloads
+        for rule in rules:
+            ret = rcc.run(rule)
+            if ret["channel_code"] != CHANNEL_SUCCESS:
+                return False, fmt.channel_error(ret, f"{prefix+23}: " + messages[prefix+23] % {'payload': rule}), fmt.successful_payloads
+            if ret["payload_code"] != SUCCESS_CODE:
+                return False, fmt.payload_error(ret, f"{prefix+24}: " + messages[prefix+24] % {'payload': rule}), fmt.successful_payloads
+            fmt.add_successful('create_rule (%s)' % rule, ret)
+
+        return True, "", fmt.successful_payloads
 
 
     status, msg, successful_payloads = run_podnet(enabled, 3020, {})
