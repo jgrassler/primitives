@@ -14,7 +14,6 @@ __all__ = [
 def build(
         namespace: str,
         public_bridge: str,
-        rules=None,
         config_file=None,
 ) -> Tuple[bool, str]:
     """
