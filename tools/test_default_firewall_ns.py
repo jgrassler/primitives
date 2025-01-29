@@ -18,7 +18,7 @@ config_file = "/etc/cloudcix/pod/configs/config.json"
 if len(sys.argv) > 2:
     namespace_name = sys.argv[2]
 if len(sys.argv) > 3:
-    bridgename = sys.argv[3]
+    public_bridge = sys.argv[3]
 
 status = None
 msg = None
