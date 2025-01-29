@@ -2,20 +2,23 @@
 
 import sys
 import json
-from cloudcix_primitives import bridgeif_ns
-# Create namespace with ns.py build verb
-# At the moment manually create global bridge
+from cloudcix_primitives import default_firewall_ns
+
+# Prerequisites for running this test script:
+#
+#   tools/test_ns.py build ns1100
+#   tools/test_bridgeif_ns.py build br-B1 ns1100
 
 # Fetch command and arguments
 cmd = sys.argv[1] if len(sys.argv) > 1 else None
-bridgename = "testbridge"
-namespace_name = "testns"
+public_bridge = "br-B1"
+namespace_name = "ns1100"
 config_file = "/etc/cloudcix/pod/configs/config.json"
 
 if len(sys.argv) > 2:
-    bridgename = sys.argv[2]
+    namespace_name = sys.argv[2]
 if len(sys.argv) > 3:
-    namespace_name = sys.argv[3]
+    public_bridge = sys.argv[3]
 
 status = None
 msg = None
@@ -23,11 +26,11 @@ data = None
 
 # Check and execute command
 if cmd == 'build':
-    status, msg = bridgeif_ns.build(bridgename, namespace_name, config_file)
+    status, msg = default_firewall_ns.build(namespace_name, public_bridge, config_file)
 elif cmd == 'read':
-    status, data, msg = bridgeif_ns.read(bridgename, namespace_name, config_file)
+    status, data, msg = default_firewall_ns.read(namespace_name, config_file)
 elif cmd == 'scrub':
-    status, msg = bridgeif_ns.scrub(bridgename, namespace_name, config_file)
+    status, msg = default_firewall_ns.scrub(namespace_name, config_file)
 else:
    print(f"Unknown command: {cmd}")
    sys.exit(1)
