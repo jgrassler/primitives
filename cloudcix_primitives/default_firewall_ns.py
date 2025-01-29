@@ -1,7 +1,10 @@
 # stdlib
+import json
 from typing import Tuple
 # lib
+from cloudcix.rcc import CHANNEL_SUCCESS, comms_ssh, CONNECTION_ERROR, VALIDATION_ERROR
 # local
+from cloudcix_primitives.utils import load_pod_config, PodnetErrorFormatter, SSHCommsWrapper
 
 
 __all__ = [
@@ -10,6 +13,7 @@ __all__ = [
     'scrub',
 ]
 
+SUCCESS_CODE = 0
 
 def build(
         namespace: str,
@@ -67,8 +71,8 @@ def build(
     3038: f'Failed to run create_filter_input_chain payload on the enabled PodNet. Payload exited with status ',
     3039: f'Failed to connect to the enabled PodNet for create_filter_forward_chain payload: ',
     3040: f'Failed to run create_filter_forward_chain payload on the enabled PodNet. Payload exited with status ',
-    3041: f'Failed to connect to the enabled PodNet for create_filter_chain_set %(set_name)s payload (%(payload)s): ',
-    3042: f'Failed to run create_filter_chain_set %(set_name)s payload (%(payload)s) on the enabled PodNet. Payload exited with status ',
+    3041: f'Failed to connect to the enabled PodNet for create_interface_set %(set_name)s payload (%(payload)s): ',
+    3042: f'Failed to run create_interface_set %(set_name)s payload (%(payload)s) on the enabled PodNet. Payload exited with status ',
     3043: f'Failed to connect to the enabled PodNet for create_user_chain %(chain)s payload (%(payload)s): ',
     3044: f'Failed to run create_user_chain %(chain)s payload (%(payload)s) on the enabled PodNet. Payload exited with status ',
     3045: f'Failed to connect to the enabled PodNet for create_rule payload (%(payload)s): ',
@@ -94,8 +98,8 @@ def build(
     3078: f'Failed to run create_filter_input_chain payload on the disabled PodNet. Payload exited with status ',
     3079: f'Failed to connect to the disabled PodNet for create_filter_forward_chain payload: ',
     3080: f'Failed to run create_filter_forward_chain payload on the disabled PodNet. Payload exited with status ',
-    3081: f'Failed to connect to the disabled PodNet for create_filter_chain_set payload (%(payload)s): ',
-    3082: f'Failed to run create_filter_chain_set payload (%(payload)s) on the disabled PodNet. Payload exited with status ',
+    3081: f'Failed to connect to the disabled PodNet for create_interface_set payload (%(payload)s): ',
+    3082: f'Failed to run create_interface_set payload (%(payload)s) on the disabled PodNet. Payload exited with status ',
     3083: f'Failed to connect to the disabled PodNet for create_user_chain payload (%(payload)s): ',
     3084: f'Failed to run create_user_chain payload (%(payload)s) on the disabled PodNet. Payload exited with status ',
     3085: f'Failed to connect to the disabled PodNet for create_rule payload (%(payload)s): ',
@@ -106,73 +110,6 @@ def build(
     if config_file is None:
         config_file = '/opt/robot/config.json'
 
-    rules = {
-        # INPUT
-        f'ip netns exec {namespace} nft add rule inet FILTER INPUT '
-        f'ct state established,related accept',
-
-        f'ip netns exec {namespace} nft add rule inet FILTER INPUT '
-        f'icmp type { echo-reply, destination-unreachable, echo-request, time-exceeded } accept',
-
-        f'ip netns exec {namespace} nft add rule inet FILTER INPUT '
-        f'icmpv6 type { echo-request, mld-listener-query, nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert } accept',
-
-        f'ip netns exec {namespace} nft add rule inet FILTER INPUT '
-        f'meta l4proto { tcp, udp } th dport 53 accept',
-
-        f'ip netns exec {namespace} nft add rule inet FILTER INPUT '
-        f'udp dport {500, 4500} accept',
-
-        f'ip netns exec {namespace} nft add rule inet FILTER INPUT '
-        f'ip protocol esp accept',
-
-        # PREROUTING
-        f'ip netns exec {namespace} nft add rule inet FILTER PREROUTING '
-        'ct state established,related accept',
-
-        f'ip netns exec {namespace} nft add rule inet FILTER PREROUTING '
-        f'iifname {namespace}.{public_bridge} jump GEO_IN_ALLOW',
-
-        f'ip netns exec ns1100 nft add rule inet FILTER PREROUTING '
-        f'iifname {namespace}.{public_bridge} jump GEO_IN_BLOCK',
-
-
-        # POSTROUTING
-        f'ip netns exec {namespace} nft add rule inet FILTER POSTROUTING '
-        f'ct state established,related accept',
-
-        f'ip netns exec {namespace} nft add rule inet FILTER POSTROUTING '
-        f'oifname {namespace}.{public_bridge} jump GEO_OUT_ALLOW',
-
-        f'ip netns exec {namespace} nft add rule inet FILTER POSTROUTING '
-        f'oifname {namespace}.{public_bridge} jump GEO_OUT_BLOCK',
-
-        # FORWARD
-        f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
-        f'ct state established,related accept',
-
-        f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
-        f'iifname @PRIVATE oifname ns1100.br-B1 jump PROJECT_OUT',
-
-        f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
-        f'iifname ns1100.br-B1 oifname @PRIVATE jump PROJECT_IN',
-
-        f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
-        f'iifname @PRIVATE oifname @S2S_TUNNEL jump VPNS2S',
-
-        f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
-        f'iifname @S2S_TUNNEL oifname @PRIVATE jump VPNS2S',
-
-        f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
-        f'iifname @PRIVATE oifname @DYN_TUNNEL jump VPNDYN',
-
-        f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
-        f'iifname @DYN_TUNNEL oifname @PRIVATE jump VPNDYN',
-
-        f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
-        f'iifname @PRIVATE oifname @PRIVATE jump PRVT_2_PRVT',
-
-    }
 
     status, config_data, msg = load_pod_config(config_file)
     if not status:
@@ -195,22 +132,87 @@ def build(
             successful_payloads
         )
 
-        user_chains = ['PRIVATE',
-                       'S2S_TUNNEL'
-                       'DYN_TUNNEL']
+        interface_sets = ['PRIVATE',
+                          'S2S_TUNNEL',
+                          'DYN_TUNNEL']
 
-        filter_chain_sets = ['GEO_IN_ALLOW',
-                             'GEO_IN_BLOCK',
-                             'GEO_OUT_ALLOW',
-                             'GEO_OUT_BLOCK',
-                             'PROJECT_OUT',
-                             'PROJECT_IN',
-                             'VPNS2S',
-                             'VPNDYN',
-                             'PRVT_2_PRVT']
+        user_chains = ['GEO_IN_ALLOW',
+                       'GEO_IN_BLOCK',
+                       'GEO_OUT_ALLOW',
+                       'GEO_OUT_BLOCK',
+                       'PROJECT_OUT',
+                       'PROJECT_IN',
+                       'VPNS2S',
+                       'VPNDYN',
+                       'PRVT_2_PRVT']
 
-        # Note: there is no write_rule payload here because all rule payloads are
-        # generated by cloudcix_primitves.utils.write_rule().
+        rules = {
+            # INPUT
+            f'ip netns exec {namespace} nft add rule inet FILTER INPUT '
+            f'ct state established,related accept',
+
+            f'ip netns exec {namespace} nft add rule inet FILTER INPUT '
+            'icmp type { echo-reply, destination-unreachable, echo-request, time-exceeded } accept',
+
+            f'ip netns exec {namespace} nft add rule inet FILTER INPUT '
+            'icmpv6 type { echo-request, mld-listener-query, nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert } accept',
+
+            f'ip netns exec {namespace} nft add rule inet FILTER INPUT '
+            'meta l4proto { tcp, udp } th dport 53 accept',
+
+            f'ip netns exec {namespace} nft add rule inet FILTER INPUT '
+            'udp dport {500, 4500} accept',
+
+            f'ip netns exec {namespace} nft add rule inet FILTER INPUT '
+            'ip protocol esp accept',
+
+            # PREROUTING
+            f'ip netns exec {namespace} nft add rule inet FILTER PREROUTING '
+            'ct state established,related accept',
+
+            f'ip netns exec {namespace} nft add rule inet FILTER PREROUTING '
+            f'iifname {namespace}.{public_bridge} jump GEO_IN_ALLOW',
+
+            f'ip netns exec ns1100 nft add rule inet FILTER PREROUTING '
+            f'iifname {namespace}.{public_bridge} jump GEO_IN_BLOCK',
+
+
+            # POSTROUTING
+            f'ip netns exec {namespace} nft add rule inet FILTER POSTROUTING '
+            'ct state established,related accept',
+
+            f'ip netns exec {namespace} nft add rule inet FILTER POSTROUTING '
+            f'oifname {namespace}.{public_bridge} jump GEO_OUT_ALLOW',
+
+            f'ip netns exec {namespace} nft add rule inet FILTER POSTROUTING '
+            f'oifname {namespace}.{public_bridge} jump GEO_OUT_BLOCK',
+
+            # FORWARD
+            f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
+            'ct state established,related accept',
+
+            f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
+            'iifname @PRIVATE oifname ns1100.br-B1 jump PROJECT_OUT',
+
+            f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
+            'iifname ns1100.br-B1 oifname @PRIVATE jump PROJECT_IN',
+
+            f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
+            'iifname @PRIVATE oifname @S2S_TUNNEL jump VPNS2S',
+
+            f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
+            'iifname @S2S_TUNNEL oifname @PRIVATE jump VPNS2S',
+
+            f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
+            'iifname @PRIVATE oifname @DYN_TUNNEL jump VPNDYN',
+
+            f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
+            'iifname @DYN_TUNNEL oifname @PRIVATE jump VPNDYN',
+
+            f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
+            'iifname @PRIVATE oifname @PRIVATE jump PRVT_2_PRVT',
+
+        }
 
         payloads = {
             'flush_ruleset': f'ip netns exec {namespace} nft flush ruleset',
@@ -225,7 +227,7 @@ def build(
                                             '{ type nat hook postrouting priority 100 \\; policy accept \\; }',
             'create_nat_prerouting_chain': f'ip netns exec {namespace} '
                                            'nft add chain ip NAT PREROUTING '
-                                           '{ type nat hook prerouting priority -100 \\; policy accept \\;',
+                                           '{ type nat hook prerouting priority -100 \\; policy accept \\; }',
 
             'create_filter_postrouting_chain': f'ip netns exec {namespace} nft add chain inet '
                                               'FILTER POSTROUTING '
@@ -242,7 +244,7 @@ def build(
             'create_filter_forward_chain': f'ip netns exec {namespace} '
                                            'nft add chain inet FILTER FORWARD '
                                            '{ type filter hook forward priority 0 \\; policy drop \\; }',
-            'create_filter_chain_set': f'ip netns exec {namespace} '
+            'create_interface_set': f'ip netns exec {namespace} '
                                        'nft add set inet FILTER %(set_name)s { type ifname\\; }',
             'create_user_chain': f'ip netns exec {namespace} '
                                  'nft add chain inet FILTER %(chain_name)s',
@@ -283,59 +285,65 @@ def build(
             return False, fmt.payload_error(ret, f"{prefix+10}: " + messages[prefix+10]), fmt.successful_payloads
         fmt.add_successful('create_nat_prerouting_chain', ret)
 
-        ret = rcc.run(payloads['create_nat_postrouting_chain'])
+        ret = rcc.run(payloads['create_filter_postrouting_chain'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
             return False, fmt.channel_error(ret, f"{prefix+11}: " + messages[prefix+11]), fmt.successful_payloads
         if ret["payload_code"] != SUCCESS_CODE:
             return False, fmt.payload_error(ret, f"{prefix+12}: " + messages[prefix+12]), fmt.successful_payloads
-        fmt.add_successful('create_nat_postrouting_chain', ret)
+        fmt.add_successful('create_filter_postrouting_chain', ret)
 
-        ret = rcc.run(payloads['create_filter_output_chain'])
+        ret = rcc.run(payloads['create_filter_prerouting_chain'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
             return False, fmt.channel_error(ret, f"{prefix+13}: " + messages[prefix+13]), fmt.successful_payloads
         if ret["payload_code"] != SUCCESS_CODE:
             return False, fmt.payload_error(ret, f"{prefix+14}: " + messages[prefix+14]), fmt.successful_payloads
-        fmt.add_successful('create_filter_output_chain', ret)
+        fmt.add_successful('create_filter_prerouting_chain', ret)
 
-        ret = rcc.run(payloads['create_filter_input_chain'])
+        ret = rcc.run(payloads['create_filter_output_chain'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
             return False, fmt.channel_error(ret, f"{prefix+15}: " + messages[prefix+15]), fmt.successful_payloads
         if ret["payload_code"] != SUCCESS_CODE:
             return False, fmt.payload_error(ret, f"{prefix+16}: " + messages[prefix+16]), fmt.successful_payloads
-        fmt.add_successful('create_filter_input_chain', ret)
+        fmt.add_successful('create_filter_output_chain', ret)
 
-        ret = rcc.run(payloads['create_filter_forward_chain'])
+        ret = rcc.run(payloads['create_filter_input_chain'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
             return False, fmt.channel_error(ret, f"{prefix+17}: " + messages[prefix+17]), fmt.successful_payloads
         if ret["payload_code"] != SUCCESS_CODE:
             return False, fmt.payload_error(ret, f"{prefix+18}: " + messages[prefix+18]), fmt.successful_payloads
+        fmt.add_successful('create_filter_input_chain', ret)
+
+        ret = rcc.run(payloads['create_filter_forward_chain'])
+        if ret["channel_code"] != CHANNEL_SUCCESS:
+            return False, fmt.channel_error(ret, f"{prefix+19}: " + messages[prefix+19]), fmt.successful_payloads
+        if ret["payload_code"] != SUCCESS_CODE:
+            return False, fmt.payload_error(ret, f"{prefix+20}: " + messages[prefix+20]), fmt.successful_payloads
         fmt.add_successful('create_filter_forward_chain', ret)
 
-        for set_name in filter_chain_sets:
+        for set_name in interface_sets:
             payload = payloads['create_interface_set'] % {'set_name': set_name}
             ret = rcc.run(payload)
             if ret["channel_code"] != CHANNEL_SUCCESS:
-                return False, fmt.channel_error(ret, f"{prefix+19}: " + messages[prefix+19] % {'payload': payload, 'set_name': set_name}), fmt.successful_payloads
+                return False, fmt.channel_error(ret, f"{prefix+21}: " + messages[prefix+21] % {'payload': payload, 'set_name': set_name}), fmt.successful_payloads
             if ret["payload_code"] != SUCCESS_CODE:
-                return False, fmt.payload_error(ret, f"{prefix+20}: " + messages[prefix+20] % {'payload': payload, 'set_name': set_name}), fmt.successful_payloads
+                return False, fmt.payload_error(ret, f"{prefix+22}: " + messages[prefix+22] % {'payload': payload, 'set_name': set_name}), fmt.successful_payloads
             fmt.add_successful('create_interface_set %s' % set_name, ret)
-            interface_set_code = interface_set_code + 3
 
         for chain in user_chains:
             payload = payloads['create_user_chain'] % {'chain_name': chain}
             ret = rcc.run(payload)
             if ret["channel_code"] != CHANNEL_SUCCESS:
-                return False, fmt.channel_error(ret, f"{prefix+21}: " + messages[prefix+21] % {'payload': payload, 'chain': chain}), fmt.successful_payloads
+                return False, fmt.channel_error(ret, f"{prefix+23}: " + messages[prefix+23] % {'payload': payload, 'chain': chain}), fmt.successful_payloads
             if ret["payload_code"] != SUCCESS_CODE:
-                return False, fmt.payload_error(ret, f"{prefix+22}: " + messages[prefix+22] % {'payload': payload, 'chain': chain}), fmt.successful_payloads
+                return False, fmt.payload_error(ret, f"{prefix+24}: " + messages[prefix+24] % {'payload': payload, 'chain': chain}), fmt.successful_payloads
             fmt.add_successful('create_user_chain %s' % chain, ret)
 
         for rule in rules:
             ret = rcc.run(rule)
             if ret["channel_code"] != CHANNEL_SUCCESS:
-                return False, fmt.channel_error(ret, f"{prefix+23}: " + messages[prefix+23] % {'payload': rule}), fmt.successful_payloads
+                return False, fmt.channel_error(ret, f"{prefix+25}: " + messages[prefix+25] % {'payload': rule}), fmt.successful_payloads
             if ret["payload_code"] != SUCCESS_CODE:
-                return False, fmt.payload_error(ret, f"{prefix+24}: " + messages[prefix+24] % {'payload': rule}), fmt.successful_payloads
+                return False, fmt.payload_error(ret, f"{prefix+26}: " + messages[prefix+26] % {'payload': rule}), fmt.successful_payloads
             fmt.add_successful('create_rule (%s)' % rule, ret)
 
         return True, "", fmt.successful_payloads
@@ -424,7 +432,6 @@ def scrub(
 
         payloads = {
             'flush_ruleset': f'ip netns exec {namespace} nft flush ruleset'
-                                'nft add chain inet FILTER %(chain_name)s',
         }
 
         ret = rcc.run(payloads['flush_ruleset'])
