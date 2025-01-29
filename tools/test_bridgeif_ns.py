@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import sys
 import json
 from cloudcix_primitives import bridgeif_ns

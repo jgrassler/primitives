@@ -183,16 +183,16 @@ def read(
 
     # Define message
     messages = {
-        1200: f'1200: Successfully read interface {namespace}.{bridgename} inside namespace {namespace}',
-        1201: f'1201: Interface {namespace}.{bridgename} does not exist',
+        1200: f'Successfully read interface {namespace}.{bridgename} inside namespace {namespace}',
+        1201: f'Interface {namespace}.{bridgename} does not exist',
 
-        3221: f'3221: Failed to connect to the enabled PodNet from the config file {config_file} for payload interface_check:  ',
-        3222: f'3222: Failed to connect to the enabled PodNet from the config file {config_file} for payload interface_del:  ',
-        3223: f'3223: Failed to run interface_del payload on the enabled PodNet. Payload exited with status ',
+        3221: f'Failed to connect to the enabled PodNet from the config file {config_file} for payload interface_show:  ',
+        3222: f'Failed to run interface_show payload on the enabled PodNet. Payload exited with status ',
+        3223: f'Bridge {bridgename} not found on the enabled PodNet node. Payload exited with status ',
 
-        3251: f'3251: Failed to connect to the disabled PodNet from the config file {config_file} for payload interface_check:  ',
-        3252: f'3252: Failed to connect to the disabled PodNet from the config file {config_file} for payload interface_del:  ',
-        3253: f'3253: Failed to run interface_del payload on the disabled PodNet. Payload exited with status ',
+        3251: f'Failed to connect to the disabled PodNet from the config file {config_file} for payload interface_show:  ',
+        3252: f'Failed to run interface_show payload on the disabled PodNet. Payload exited with status ',
+        3253: f'Bridge {bridgename} not found on the disabled PodNet node. Payload exited with status ',
     }
 
     # Default config_file if it is None
@@ -237,7 +237,10 @@ def read(
             fmt.store_channel_error(ret, f"{prefix+1} : " + messages[prefix+1])
         if ret["payload_code"] != SUCCESS_CODE:
             retval = False
-            fmt.store_payload_error(ret, f"{prefix+2} : " + messages[prefix+2])
+            if ret["payload_code"] == 2:
+                fmt.store_payload_error(ret, f"{prefix+2} : " + messages[prefix+2])
+            if ret["payload_code"] == 1:
+                fmt.store_payload_error(ret, f"{prefix+3} : " + messages[prefix+3])
         else:
             data_dict[podnet_node]['entry'] = ret["payload_message"].strip()
             fmt.add_successful('interface_show', ret)
@@ -283,16 +286,19 @@ def scrub(
 
     # Define message
     messages = {
-        1100: f'1100: Successfully removed interface {namespace}.{bridgename} inside namespace {namespace}',
-        1101: f'1101: Interface {namespace}.{bridgename} does not exist',
+        1100: f'1100: Successfully removed interface {namespace}.{bridgename} inside namespace {namespace} on both PodNet nodes.',
+        1121: f'Interface {namespace}.{bridgename} does not exist on enabled PodNet: interface_check payload exited with status ',
+        1151: f'Interface {namespace}.{bridgename} does not exist on disabled PodNet: interface_check payload exited with status ',
 
-        3121: f'3121: Failed to connect to the enabled PodNet from the config file {config_file} for payload interface_check:  ',
-        3122: f'3122: Failed to connect to the enabled PodNet from the config file {config_file} for payload interface_del:  ',
-        3123: f'3123: Failed to run interface_del payload on the enabled PodNet. Payload exited with status ',
+        3121: f'Failed to connect to the enabled PodNet from the config file {config_file} for payload interface_check:  ',
+        3222: f'Failed to run interface_check payload on the enabled PodNet. Payload exited with status ',
+        3123: f'Failed to connect to the enabled PodNet from the config file {config_file} for payload interface_del:  ',
+        3124: f'Failed to run interface_del payload on the enabled PodNet. Payload exited with status ',
 
-        3151: f'3151: Failed to connect to the disabled PodNet from the config file {config_file} for payload interface_check:  ',
-        3152: f'3152: Failed to connect to the disabled PodNet from the config file {config_file} for payload interface_del:  ',
-        3153: f'3153: Failed to run interface_del payload on the disabled PodNet. Payload exited with status ',
+        3151: f'Failed to connect to the disabled PodNet from the config file {config_file} for payload interface_check:  ',
+        3222: f'Failed to run interface_check payload on the disabled PodNet. Payload exited with status ',
+        3153: f'Failed to connect to the disabled PodNet from the config file {config_file} for payload interface_del:  ',
+        3154: f'Failed to run interface_del payload on the disabled PodNet. Payload exited with status ',
     }
 
     # Default config_file if it is None
@@ -331,28 +337,31 @@ def scrub(
         if ret["channel_code"] != CHANNEL_SUCCESS:
             return False, fmt.channel_error(ret, f"{prefix+1}: " + messages[prefix+1]), fmt.successful_payloads
         if ret["payload_code"] != SUCCESS_CODE:
-            #If the interface already does NOT exists returns info and true state
-            interface_exists = False
+            if ret["payload_code"] == 2:
+                fmt.store_payload_error(ret, f"{prefix+2} : " + messages[prefix+2])
+            # If the interface already does NOT exists returns info and true state
+            if ret["payload_code"] == 1:
+                interface_exists = False
         fmt.add_successful('interface_check', ret)
 
         if not interface_exists:
-            return True, fmt.payload_error(ret, f"1101: " + messages[1101]), fmt.successful_payloads
+            return True, fmt.payload_error(ret, f"{prefix+1-2000}: " + messages[prefix+1-2000]), fmt.successful_payloads
 
         ret = rcc.run(payloads['interface_del'])
         if ret["channel_code"] != CHANNEL_SUCCESS:
-            return False, fmt.channel_error(ret, f"{prefix+2}: " + messages[prefix+2]), fmt.successful_payloads
+            return False, fmt.channel_error(ret, f"{prefix+3}: " + messages[prefix+3]), fmt.successful_payloads
         if ret["payload_code"] != SUCCESS_CODE:
-            return False, fmt.payload_error(ret, f"{prefix+3}: " + messages[prefix+3]), fmt.successful_payloads
+            return False, fmt.payload_error(ret, f"{prefix+4}: " + messages[prefix+4]), fmt.successful_payloads
         fmt.add_successful('interface_del', ret)
 
         return True, "", fmt.successful_payloads
 
-    status, msg, successful_payloads = run_podnet(enabled, 3120, {})
+    status, msg_enabled, successful_payloads = run_podnet(enabled, 3120, {})
     if status == False:
-        return status, msg
+        return status, msg_enabled
 
-    status, msg, successful_payloads = run_podnet(disabled, 3150, successful_payloads)
+    status, msg_disabled, successful_payloads = run_podnet(disabled, 3150, successful_payloads)
     if status == False:
-        return status, msg
+        return status, msg_disabled
 
-    return status, messages[1100] + '\n' + msg
+    return status, messages[1100] + '\n' + msg_enabled + msg_disabled
