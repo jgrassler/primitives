@@ -146,7 +146,7 @@ def build(
                        'VPNDYN',
                        'PRVT_2_PRVT']
 
-        rules = {
+        rules = [
             # INPUT
             f'ip netns exec {namespace} nft add rule inet FILTER INPUT '
             f'ct state established,related accept',
@@ -212,7 +212,7 @@ def build(
             f'ip netns exec ns1100 nft add rule inet FILTER FORWARD '
             'iifname @PRIVATE oifname @PRIVATE jump PRVT_2_PRVT',
 
-        }
+        ]
 
         payloads = {
             'flush_ruleset': f'ip netns exec {namespace} nft flush ruleset',
