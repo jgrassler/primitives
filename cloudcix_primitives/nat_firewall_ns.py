@@ -36,7 +36,7 @@ def build(
             type: string
             required: true
         one_to_one:
-          description: List of 1:1 mapping dictonaries from private IP address to public IP addrress.
+          description: List of 1:1 mapping dictonaries from private IP address to public IP address. May be empty.
           type: list
           properties:
             private:
@@ -45,11 +45,11 @@ def build(
             public:
                 description:
                     The public IP address a private IP address is mapped to.
-          required: false
-        ranges:
-          description: flat list of IP addresses to map to the name space's public IP address.
+          required: true
+        ranges
+          description: flat list of IP addresses to map to the name space's public IP address. May be empty.
           type: list
-          required: false
+          required: true
         public_ip_ns:
           description: the name space's pulic IP address.
           type: str
