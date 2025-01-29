@@ -114,16 +114,17 @@ def build(
         )
 
         payloads = {
-            'flush_postrouting': f'ip netns exec ns1100 nft flush inet NAT POSTROUTING',
-            'flush_prerouting': f'ip netns exec ns1100 nft flush inet NAT PREROUTING',
+            'flush_postrouting': f'ip netns exec {namespace} nft flush chain NAT POSTROUTING',
+            'flush_prerouting': f'ip netns exec {namespace} nft flush chain NAT PREROUTING',
         }
+
 
 
         rule_templates = {
           'prerouting_11': f'ip netns exec {namespace} '
                            'nft add rule ip NAT POSTROUTING ip saddr %(private)s snat to %(public)s',
           'postrouting_11': f'ip netns exec {namespace} '
-                            'nft add rule ip NAT PREROUTING ip saddr %(private)s snat to %(public)s',
+                            'nft add rule ip NAT PREROUTING ip daddr %(public)s dnat ip to %(private)s',
           'range': f'ip netns exec {namespace} '
                    f'nft add rule ip NAT POSTROUTING ip saddr %(network)s snat to {public_ip_ns}'
         }
@@ -144,20 +145,20 @@ def build(
 
         for mapping in one_to_one:
             payload_prerouting = rule_templates['prerouting_11'] % mapping
-            payload_postrouting = rule_templates['prerouting_11'] % mapping
+            payload_postrouting = rule_templates['postrouting_11'] % mapping
 
             ret = rcc.run(payload_postrouting)
             if ret["channel_code"] != CHANNEL_SUCCESS:
-                return False, fmt.channel_error(ret, f"{prefix+5}: " + messages[prefix+5] % {'payload': payload_postrouting}, fmt.successful_payloads)
+                return False, fmt.channel_error(ret, f"{prefix+5}: " + messages[prefix+5] % {'payload': payload_postrouting}), fmt.successful_payloads
             if ret["payload_code"] != SUCCESS_CODE:
-                return False, fmt.payload_error(ret, f"{prefix+6}: " + messages[prefix+6] % {'payload': payload_postrouting}, fmt.successful_payloads)
+                return False, fmt.payload_error(ret, f"{prefix+6}: " + messages[prefix+6] % {'payload': payload_postrouting}), fmt.successful_payloads
             fmt.add_successful('postrouting_11 (%s)' % payload_postrouting, ret)
 
             ret = rcc.run(payload_prerouting)
             if ret["channel_code"] != CHANNEL_SUCCESS:
-                return False, fmt.channel_error(ret, f"{prefix+7}: " + messages[prefix+7] % {'payload': payload_prerouting}, fmt.successful_payloads)
+                return False, fmt.channel_error(ret, f"{prefix+7}: " + messages[prefix+7] % {'payload': payload_prerouting}), fmt.successful_payloads
             if ret["payload_code"] != SUCCESS_CODE:
-                return False, fmt.payload_error(ret, f"{prefix+8}: " + messages[prefix+8] % {'payload': payload_prerouting}, fmt.successful_payloads)
+                return False, fmt.payload_error(ret, f"{prefix+8}: " + messages[prefix+8] % {'payload': payload_prerouting}), fmt.successful_payloads
             fmt.add_successful('prerouting_11 (%s)' % payload_prerouting, ret)
 
         for network in ranges:
@@ -165,9 +166,9 @@ def build(
 
             ret = rcc.run(payload)
             if ret["channel_code"] != CHANNEL_SUCCESS:
-                return False, fmt.channel_error(ret, f"{prefix+9}: " + messages[prefix+9] % {'payload': payload}, fmt.successful_payloads)
+                return False, fmt.channel_error(ret, f"{prefix+9}: " + messages[prefix+9] % {'payload': payload}), fmt.successful_payloads
             if ret["payload_code"] != SUCCESS_CODE:
-                return False, fmt.payload_error(ret, f"{prefix+10}: " + messages[prefix+10] % {'payload': payload}, fmt.successful_payloads)
+                return False, fmt.payload_error(ret, f"{prefix+10}: " + messages[prefix+10] % {'payload': payload}), fmt.successful_payloads
             fmt.add_successful('range (%s)' % payload, ret)
 
         return True, "", fmt.successful_payloads
@@ -272,18 +273,8 @@ def scrub(
         )
 
         payloads = {
-            'flush_postrouting': f'ip netns exec ns1100 nft flush inet NAT POSTROUTING',
-            'flush_prerouting': f'ip netns exec ns1100 nft flush inet NAT PREROUTING',
-        }
-
-
-        rule_templates = {
-          'prerouting_11': f'ip netns exec {namespace} '
-                           'nft add rule ip NAT POSTROUTING ip saddr %(private)s snat to %(public)s',
-          'postrouting_11': f'ip netns exec {namespace} '
-                            'nft add rule ip NAT PREROUTING ip saddr %(private)s snat to %(public)s',
-          'range': f'ip netns exec {namespace} '
-                   f'nft add rule ip NAT POSTROUTING ip saddr %(network)s snat to {public_ip_ns}'
+            'flush_postrouting': f'ip netns exec {namespace} nft flush chain NAT POSTROUTING',
+            'flush_prerouting': f'ip netns exec {namespace} nft flush chain NAT PREROUTING',
         }
 
         ret = rcc.run(payloads['flush_postrouting'])
