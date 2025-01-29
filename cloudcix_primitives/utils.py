@@ -161,10 +161,10 @@ def write_rule(namespace: str, rule: Dict[str, Optional[Any]], user_chain: str) 
     elif rule['protocol'] == 'icmp' and str(rule['version']) == '6':
         command.append('icmpv6 type { echo-request, mld-listener-query, nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert }')
     elif rule['protocol'] != 'any':
-        command.append(f'{rule['protocol']}')
+        command.append(rule["protocol"])
 
     if rule['port'] is not None:
-        command.append(f'dport {{ {rule['port']} }}')
+        command.append(f'dport {{ {rule["port"]} }}')
     
     if rule['log']:
         command.append(f'log prefix "Namespace_{namespace}_Table_FILTER" level debug')
