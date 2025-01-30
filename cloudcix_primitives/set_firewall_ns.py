@@ -59,15 +59,14 @@ def build(
         )
 
         payloads = {
-            # 'set_check': f'ip netns exec {namespace} nft list set inet FILTER {name}',
             'set_add': f'ip netns exec {namespace} nft add set inet FILTER {name} {{ type {type}\\; flags interval\\; auto-merge\\; }}'
         }
 
         ret = rcc.run(payloads['set_add'])
         if ret['channel_code'] != CHANNEL_SUCCESS:
-            return False, fmt.channel_error(ret, f'{prefix+1}: {messages[prefix+1]}')
+            return False, fmt.channel_error(ret, f'{prefix+1}: {messages[prefix+1]}'), fmt.successful_payloads
         if ret['payload_code'] != SUCCESS_CODE:
-            return False, fmt.payload_error(ret, f'{prefix+2}: {messages[prefix+2]}')
+            return False, fmt.payload_error(ret, f'{prefix+2}: {messages[prefix+2]}'), fmt.successful_payloads
         fmt.add_successful('set_add', ret)
 
         return True, "", fmt.successful_payloads
@@ -84,42 +83,8 @@ def build(
         
 
 
-def read(
-    namespace: str,
-    name: str,
-    config_file=None,
-) -> Tuple[bool, dict, str]:
-    messages = {
-    }
-
-    # Default config_file if it is None
-    if config_file is None:
-        config_file = '/opt/robot/config.json'
-
-    status, config_data, msg = load_pod_config(config_file)
-    if not status:
-        if config_data['raw'] is None:
-            return False, msg
-        else:
-            return False, msg + "\nJSON dump of raw configuration:\n" + json.dumps(config_data['raw'],
-                                                                               indent=2,
-                                                                               sort_keys=True)
-    enabled = config_data['processed']['enabled']
-    disabled = config_data['processed']['disabled']
-
-    def run_podnet(podnet_node, prefix, successful_payloads, data_dict):
-        rcc = SSHCommsWrapper(comms_ssh, podnet_node, 'robot')
-        fmt = PodnetErrorFormatter(
-            config_file,
-            podnet_node,
-            podnet_node == enabled,
-            {'payload_message': 'STDOUT', 'payload_error': 'STDERR'},
-            successful_payloads
-        )
-
-        return True, "", fmt.successful_payloads, data_dict
-    
-    status, 
+def read() -> Tuple[bool, dict, str]:
+    return(False, {}, 'Not Implemented')
 
 
 def scrub(
@@ -136,6 +101,7 @@ def scrub(
         3151: f'3151: Failed to connect to the disabled PodNet for set_destroy payload:  ',
         3152: f'3152: Failed to removed named nftables set {name} inside namespace {namespace} on the disabled PodNet for payload set_destroy:  ',
     }
+
     # Default config_file if it is None
     if config_file is None:
         config_file = '/opt/robot/config.json'
@@ -162,14 +128,14 @@ def scrub(
         )
 
         payloads = {
-            'set_destroy': f'ip netns exec {namespace} nft destroy inet FILTER {name}'
+            'set_destroy': f'ip netns exec {namespace} nft destroy set inet FILTER {name}'
         }
 
         ret = rcc.run(payloads['set_destroy'])
         if ret['channel_code'] != CHANNEL_SUCCESS:
-            return False, fmt.channel_error(ret, f'{prefix+1}: {messages[prefix+1]}')
+            return False, fmt.channel_error(ret, f'{prefix+1}: {messages[prefix+1]}'), fmt.successful_payloads
         if ret['payload_code'] != SUCCESS_CODE:
-            return False, fmt.payload_error(ret, f'{prefix+2}: {messages[prefix+2]}')
+            return False, fmt.payload_error(ret, f'{prefix+2}: {messages[prefix+2]}'), fmt.successful_payloads
         fmt.add_successful('set_destroy', ret)
 
         return True, "", fmt.successful_payloads
@@ -204,6 +170,7 @@ def update(
         3353: f'3353: Failed to connect to the disabled PodNet for set_add_element payload:  ',
         3354: f'3354: Failed to add {elements} to named nftables set {name} inside namespace {namespace} on the disabled PodNet for payload set_add_element:  ',
     }
+
     # Default config_file if it is None
     if config_file is None:
         config_file = '/opt/robot/config.json'
@@ -236,16 +203,16 @@ def update(
 
         ret = rcc.run(payloads['set_flush'])
         if ret['channel_code'] != CHANNEL_SUCCESS:
-            return False, fmt.channel_error(ret, f'{prefix+1}: {messages[prefix+1]}')
+            return False, fmt.channel_error(ret, f'{prefix+1}: {messages[prefix+1]}'), fmt.successful_payloads
         if ret['payload_code'] != SUCCESS_CODE:
-            return False, fmt.payload_error(ret, f'{prefix+2}: {messages[prefix+2]}')
+            return False, fmt.payload_error(ret, f'{prefix+2}: {messages[prefix+2]}'), fmt.successful_payloads
         fmt.add_successful('set_flush', ret)
 
         ret = rcc.run(payloads['set_add_element'])
         if ret['channel_code'] != CHANNEL_SUCCESS:
-            return False, fmt.channel_error(ret, f'{prefix+3}: {messages[prefix+3]}')
+            return False, fmt.channel_error(ret, f'{prefix+3}: {messages[prefix+3]}'), fmt.successful_payloads
         if ret['payload_code'] != SUCCESS_CODE:
-            return False, fmt.payload_error(ret, f'{prefix+4}: {messages[prefix+4]}')
+            return False, fmt.payload_error(ret, f'{prefix+4}: {messages[prefix+4]}'), fmt.successful_payloads
         fmt.add_successful('set_add_element')
 
         return True, "", fmt.successful_payloads
