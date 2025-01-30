@@ -35,7 +35,7 @@ rules=[
     }, {
         'version': 4,
         'source': '10.10.0.0/24',
-        'destination': '10.21.0.0/24'
+        'destination': '10.21.0.0/24',
         'protocol': 'any',
         'port': None,
         'action': 'accept',
@@ -58,11 +58,11 @@ data = None
 
 # Check and execute command
 if cmd == 'build':
-    status, msg = vpns2s_firewall_ns.build(namespace_name, rules, config_file)
+    status, msg = prvt2prvt_firewall_ns.build(namespace_name, rules, config_file)
 elif cmd == 'read':
-    status, data, msg = vpns2s_firewall_ns.read(namespace_name, config_file)
+    status, data, msg = prvt2prvt_firewall_ns.read(namespace_name, config_file)
 elif cmd == 'scrub':
-    status, msg = vpns2s_firewall_ns.scrub(namespace_name, config_file)
+    status, msg = prvt2prvt_firewall_ns.scrub(namespace_name, config_file)
 else:
    print(f"Unknown command: {cmd}")
    sys.exit(1)
