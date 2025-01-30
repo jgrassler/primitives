@@ -126,7 +126,7 @@ def build(
             return False, fmt.payload_error(ret, f"{prefix+2}: " + messages[prefix+2]), fmt.successful_payloads
         fmt.add_successful('flush_vpns2s', ret)
 
-        for rule in sorted(vpns2s, key=lambda fw: fw['order']):
+        for rule in sorted(rules, key=lambda fw: fw['order']):
             payload = write_rule(namespace=namespace, rule=rule, user_chain='VPNS2S')
 
             ret = rcc.run(payload)
