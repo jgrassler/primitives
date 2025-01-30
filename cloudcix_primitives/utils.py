@@ -154,7 +154,7 @@ def write_rule(namespace: str, rule: Dict[str, Optional[Any]], user_chain: str) 
     """
     v = '' if str(rule['version']) == '4' else '6'
 
-    command = [f'ip{v} netns exec {namespace} nft add rule inet FILTER {user_chain} ip saddr {rule["source"]} ip daddr {rule["destination"]}']
+    command = [f'ip netns exec {namespace} nft add rule inet FILTER {user_chain} ip{v} saddr {rule["source"]} ip{v} daddr {rule["destination"]}']
 
     if rule['protocol'] == 'icmp' and str(rule['version']) == '4':
         command.append('icmp type { echo-reply, destination-unreachable, echo-request, time-exceeded }')
@@ -163,7 +163,7 @@ def write_rule(namespace: str, rule: Dict[str, Optional[Any]], user_chain: str) 
     elif rule['protocol'] != 'any':
         command.append(rule["protocol"])
 
-    if rule['port'] is not None:
+    if rule['port'] is not None and rule["protocol"] in ['tcp', 'udp']:
         command.append(f'dport {{ {rule["port"]} }}')
     
     if rule['log']:
