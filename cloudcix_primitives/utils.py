@@ -163,7 +163,7 @@ def write_rule(namespace: str, rule: Dict[str, Optional[Any]], user_chain: str) 
     elif rule['protocol'] != 'any':
         command.append(rule["protocol"])
 
-    if rule['port'] is not None:
+    if rule['port'] is not None and rule["protocol"] in ['tcp', 'udp']:
         command.append(f'dport {{ {rule["port"]} }}')
     
     if rule['log']:
