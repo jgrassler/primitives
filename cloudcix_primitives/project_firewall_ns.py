@@ -4,7 +4,7 @@ from typing import Tuple, List, Dict, Any
 # lib
 from cloudcix.rcc import CHANNEL_SUCCESS, comms_ssh, CONNECTION_ERROR, VALIDATION_ERROR
 # local
-from cloudcix_primitives.utils import load_pod_config, PodnetErrorFormatter, SSHCommsWrapper
+from cloudcix_primitives.utils import load_pod_config, PodnetErrorFormatter, SSHCommsWrapper, write_rule
 
 
 __all__ = [
@@ -121,20 +121,20 @@ def build(
     3021: f'Failed to connect to the enabled PodNet for flush_inbound payload: ',
     3022: f'Failed to run flush_inbound payload on the enabled PodNet. Payload exited with status ',
     3023: f'Failed to connect to the enabled PodNet for create_inbound_rule payload (%(payload)s): ',
-    3024: f'Failed to run flush_inbound payload (%(payload)s) on the enabled PodNet. Payload exited with status ',
+    3024: f'Failed to run create_inbound_rule payload (%(payload)s) on the enabled PodNet. Payload exited with status ',
     3025: f'Failed to connect to the enabled PodNet for flush_outbound payload: ',
     3026: f'Failed to run flush_outbound payload on the enabled PodNet. Payload exited with status ',
     3027: f'Failed to connect to the enabled PodNet for create_outbound_rule payload (%(payload)s): ',
-    3028: f'Failed to run flush_outbound payload (%(payload)s) on the enabled PodNet. Payload exited with status ',
+    3028: f'Failed to run create_outbound_rule payload (%(payload)s) on the enabled PodNet. Payload exited with status ',
 
     3061: f'Failed to connect to the disabled PodNet for flush_inbound payload: ',
     3062: f'Failed to run flush_inbound payload on the disabled PodNet. Payload exited with status ',
     3063: f'Failed to connect to the disabled PodNet for create_inbound_rule payload (%(payload)s): ',
-    3064: f'Failed to run flush_inbound payload (%(payload)s) on the disabled PodNet. Payload exited with status ',
+    3064: f'Failed to run create_inbound_rule payload (%(payload)s) on the disabled PodNet. Payload exited with status ',
     3065: f'Failed to connect to the disabled PodNet for flush_outbound payload: ',
     3066: f'Failed to run flush_outbound payload on the disabled PodNet. Payload exited with status ',
     3067: f'Failed to connect to the disabled PodNet for create_outbound_rule payload (%(payload)s): ',
-    3068: f'Failed to run flush_outbound payload (%(payload)s) on the disabled PodNet. Payload exited with status ',
+    3068: f'Failed to run create_outbound_rule payload (%(payload)s) on the disabled PodNet. Payload exited with status ',
     }
 
     # Default config_file if it is None
