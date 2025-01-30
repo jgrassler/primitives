@@ -23,6 +23,29 @@ def build(
     type: Literal['ipv4_addr', 'ipv6_addr'],
     config_file=None
 ) -> Tuple[bool, str]:
+    """
+    description:
+        Builds an nftables rules set in the FILTER table within the given network namespace for IPv4 or or IPv6 rules.
+
+    parameters:
+        namespace:
+            description: VRF network name space's identifier, such as 'VRF453'
+            type: string
+            required: true
+        name:
+            description: the ruleset name, such as 'IE_V4'.
+            type: string
+            required: true
+        config_file:
+            description: path to the config.json file
+            type: string
+            required: false
+    return:
+        description: |
+            A tuple with a boolean flag stating if the build was successful or not and
+            the output or error message.
+        type: tuple
+    """
     messages = {
         1000: f'1000: Successfully created named nftables set {name} inside namespace {namespace} for type {type}',
 
@@ -92,6 +115,29 @@ def scrub(
     name: str,
     config_file=None
 ) -> Tuple[bool, str]:
+    """
+    description:
+        Deletes the named nftables ruleset from the FILTER table.
+
+    parameters:
+        namespace:
+            description: VRF network name space's identifier, such as 'VRF453'
+            type: string
+            required: true
+        name:
+            description: the ruleset name, such as 'IE_V4'.
+            type: string
+            required: true
+        config_file:
+            description: path to the config.json file
+            type: string
+            required: false
+    return:
+        description: |
+            A tuple with a boolean flag stating if the build was successful or not and
+            the output or error message.
+        type: tuple
+    """
     messages = {
         1100: f'1000: Successfully removed named nftables set {name} inside namespace {namespace}',
 
@@ -157,6 +203,33 @@ def update(
     elements: str,
     config_file=None
 ) -> Tuple[bool, str]:
+    """
+    description:
+        Adds elements to the nftables ruleset to filter.
+
+    parameters:
+        namespace:
+            description: VRF network name space's identifier, such as 'VRF453'
+            type: string
+            required: true
+        name:
+            description: the ruleset name, such as 'IE_V4'.
+            type: string
+            required: true
+        elements:
+            description: comma delimited string of IP addresses, address ranges or resolvable hostnames.
+            type: string
+            required: true
+        config_file:
+            description: path to the config.json file
+            type: string
+            required: false
+    return:
+        description: |
+            A tuple with a boolean flag stating if the build was successful or not and
+            the output or error message.
+        type: tuple
+    """
     messages = {
         1300: f'1300: Successfully updated named nftables set {name} inside namespace {namespace}',
 
