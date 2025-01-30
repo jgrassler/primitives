@@ -18,7 +18,7 @@ SUCCESS_CODE = 0
 def build(
         namespace: str,
         one_to_one: List[Dict[str, str]],
-        ranges: list,
+        ranges: List[str],
         public_ip_ns: str,
         config_file=None,
 ) -> Tuple[bool, str]:
