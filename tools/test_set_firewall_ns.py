@@ -18,9 +18,10 @@ if len(sys.argv) > 2:
 if len(sys.argv) > 3:
     set_name = sys.argv[3]
 if len(sys.argv) > 4:
+    # Depending on whether the operation is 'build' or 'update', the 3rd
+    # argument is either the set's type or its list of elements.
     set_type = sys.argv[4]
-if len(sys.argv) > 5:
-    set_elements = sys.argv[5]
+    set_elements = sys.argv[4]
 
 status = None
 msg = None
