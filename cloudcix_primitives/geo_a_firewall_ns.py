@@ -17,8 +17,8 @@ SUCCESS_CODE = 0
 
 def build(
         namespace: str,
-        inbound: List[Dict[str, Any]],
-        outbound: List[Dict[str, Any]],
+        inbound: List[str],
+        outbound: List[str],
         config_file=None,
 ) -> Tuple[bool, str]:
     """
@@ -33,81 +33,17 @@ def build(
             required: true
         inbound:
           description: |
-              list of rule dictionaries for inbound rules to be created in
-              GEO_IN_ALLOW chain. These dictionaries will be processed by
-              cloudcix_primitives.utils.write_rule().
+              list of GeoIP address sets to allow as destinations for outbund
+              traffic. All sets listed must exist. Can be empty.
           type: list
           required: true
-          properties:
-            version:
-                type: int
-                description:
-                required: true
-                    IP version. Must be either 4 or 6.
-            source:
-                description:
-                type: string
-                required: true
-                    Source address with optional CIDR prefix length, e.g. 0.0.0.0/0
-            destination:
-                description:
-                required: true
-                    Destination address with optional CIDR prefix length, e.g. 0.0.0.0/0
-            protocol:
-                description: IP protocol, such as 'tcp', 'udp' or 'any'.
-            port:
-                description: port number
-                required: false
-            action:
-                description: |
-                    action to take if the rule matches. Can be 'accept', 'drop' or 'reject'.
-            log:
-                description: whether to log matches of the rule.
-                type: bool
-                required: true
-            order:
-                description: position of the rule in the chain.
-                type: int
-                required: true
 
         outbound:
           description: |
-              list of rule dictionaries for outbound rules to be created in
-              GEO_OUT_ALLOW chain. These dictionaries will be processed by
-              cloudcix_primitives.utils.write_rule().
+              list of GeoIP address sets to allow as destinations for outbund
+              traffic. All sets listed must exist. Can be empty.
           type: list
           required: true
-          properties:
-            version:
-                type: int
-                description:
-                required: true
-                    IP version. Must be either 4 or 6.
-            source:
-                description:
-                type: string
-                required: true
-                    Source address with optional CIDR prefix length, e.g. 0.0.0.0/0
-            destination:
-                description:
-                required: true
-                    Destination address with optional CIDR prefix length, e.g. 0.0.0.0/0
-            protocol:
-                description: IP protocol, such as 'tcp', 'udp' or 'any'.
-            port:
-                description: port number
-                required: false
-            action:
-                description: |
-                    action to take if the rule matches. Can be 'accept', 'drop' or 'reject'.
-            log:
-                description: whether to log matches of the rule.
-                type: bool
-                required: true
-            order:
-                description: position of the rule in the chain.
-                type: int
-                required: true
     return:
         description: |
             A tuple with a boolean flag stating if the build was successful or not and
@@ -120,27 +56,27 @@ def build(
 
     3021: f'Failed to connect to the enabled PodNet for flush_inbound payload: ',
     3022: f'Failed to run flush_inbound payload on the enabled PodNet. Payload exited with status ',
-    3023: f'Failed to connect to the enabled PodNet for create_inbound_rule payload (%(payload)s): ',
-    3024: f'Failed to run create_inbound_rule payload (%(payload)s) on the enabled PodNet. Payload exited with status ',
+    3023: f'Failed to connect to the enabled PodNet for add_inbound_set payload (%(payload)s): ',
+    3024: f'Failed to run add_inbound_set payload (%(payload)s) on the enabled PodNet. Payload exited with status ',
     3025: f'Failed to connect to the enabled PodNet for add_inbound_drop payload (%(payload)s): ',
     3036: f'Failed to run add_inbound_drop payload (%(payload)s) on the enabled PodNet. Payload exited with status ',
     3067: f'Failed to connect to the enabled PodNet for flush_outbound payload: ',
     3028: f'Failed to run flush_outbound payload on the enabled PodNet. Payload exited with status ',
-    3029: f'Failed to connect to the enabled PodNet for create_outbound_rule payload (%(payload)s): ',
-    3030: f'Failed to run create_outbound_rule payload (%(payload)s) on the enabled PodNet. Payload exited with status ',
+    3029: f'Failed to connect to the enabled PodNet for add_outbound_set payload (%(payload)s): ',
+    3030: f'Failed to run add_outbound_set payload (%(payload)s) on the enabled PodNet. Payload exited with status ',
     3031: f'Failed to connect to the enabled PodNet for add_outbound_drop payload (%(payload)s): ',
     3032: f'Failed to run add_outbound_drop payload (%(payload)s) on the enabled PodNet. Payload exited with status ',
 
     3061: f'Failed to connect to the disabled PodNet for flush_inbound payload: ',
     3062: f'Failed to run flush_inbound payload on the disabled PodNet. Payload exited with status ',
-    3063: f'Failed to connect to the disabled PodNet for create_inbound_rule payload (%(payload)s): ',
-    3064: f'Failed to run create_inbound_rule payload (%(payload)s) on the disabled PodNet. Payload exited with status ',
+    3063: f'Failed to connect to the disabled PodNet for add_inbound_set payload (%(payload)s): ',
+    3064: f'Failed to run add_inbound_set payload (%(payload)s) on the disabled PodNet. Payload exited with status ',
     3065: f'Failed to connect to the disabled PodNet for add_inbound_drop payload (%(payload)s): ',
     3036: f'Failed to run add_inbound_drop payload (%(payload)s) on the disabled PodNet. Payload exited with status ',
     3067: f'Failed to connect to the disabled PodNet for flush_outbound payload: ',
     3068: f'Failed to run flush_outbound payload on the disabled PodNet. Payload exited with status ',
-    3069: f'Failed to connect to the disabled PodNet for create_outbound_rule payload (%(payload)s): ',
-    3070: f'Failed to run create_outbound_rule payload (%(payload)s) on the disabled PodNet. Payload exited with status ',
+    3069: f'Failed to connect to the disabled PodNet for add_outbound_set payload (%(payload)s): ',
+    3070: f'Failed to run add_outbound_set payload (%(payload)s) on the disabled PodNet. Payload exited with status ',
     3071: f'Failed to connect to the disabled PodNet for add_outbound_drop payload (%(payload)s): ',
     3072: f'Failed to run add_outbound_drop payload (%(payload)s) on the disabled PodNet. Payload exited with status ',
     }
@@ -170,6 +106,11 @@ def build(
             {'payload_message': 'STDOUT', 'payload_error': 'STDERR'},
             successful_payloads
         )
+        
+        rule_templates = {
+            'add_inbound_set': f'ip netns exec {namespace} nft add rule inet FILTER GEO_IN_ALLOW ip%(ip_version)s saddr @%(set)s accept',
+            'add_outbound_set': f'ip netns exec {namespace} nft add rule inet FILTER GEO_OUT_ALLOW ip%(ip_version)s saddr @%(set)s accept',
+        }
 
         payloads = {
             'flush_inbound': f'ip netns exec {namespace} nft flush chain inet FILTER GEO_IN_ALLOW',
@@ -185,15 +126,20 @@ def build(
             return False, fmt.payload_error(ret, f"{prefix+2}: " + messages[prefix+2]), fmt.successful_payloads
         fmt.add_successful('flush_inbound', ret)
 
-        for rule in sorted(inbound, key=lambda fw: fw['order']):
-            payload = write_rule(namespace=namespace, rule=rule, user_chain='PROJECT_IN')
+        for address_set in inbound:
+            if address_set.endswith('_V4'):
+                ip_version = ''
+            if address_set.endswith('_V6'):
+                ip_version = '6'
+
+            payload = rule_templates['add_inbound_set'] % {'set': address_set, 'ip_version': ip_version}
 
             ret = rcc.run(payload)
             if ret["channel_code"] != CHANNEL_SUCCESS:
                 return False, fmt.channel_error(ret, f"{prefix+3}: " + messages[prefix+3] % {'payload': payload}), fmt.successful_payloads
             if ret["payload_code"] != SUCCESS_CODE:
                 return False, fmt.payload_error(ret, f"{prefix+4}: " + messages[prefix+4] % {'payload': payload}), fmt.successful_payloads
-            fmt.add_successful('create_inbound_rule (%s)' % payload, ret)
+            fmt.add_successful('add_inbound_set (%s)' % payload, ret)
 
         if (len(inbound) > 0):
             ret = rcc.run(payloads['add_inbound_drop'])
@@ -210,15 +156,20 @@ def build(
             return False, fmt.payload_error(ret, f"{prefix+8}: " + messages[prefix+8]), fmt.successful_payloads
         fmt.add_successful('flush_outbound', ret)
 
-        for rule in sorted(outbound, key=lambda fw: fw['order']):
-           payload = write_rule(namespace=namespace, rule=rule, user_chain='PROJECT_OUT')
+        for address_set in outbound:
+            if address_set.endswith('_V4'):
+                ip_version = ''
+            if address_set.endswith('_V6'):
+                ip_version = '6'
 
-           ret = rcc.run(payload)
-           if ret["channel_code"] != CHANNEL_SUCCESS:
-               return False, fmt.channel_error(ret, f"{prefix+9}: " + messages[prefix+9] % {'payload': payload}), fmt.successful_payloads
-           if ret["payload_code"] != SUCCESS_CODE:
-               return False, fmt.payload_error(ret, f"{prefix+10}: " + messages[prefix+10] % {'payload': payload}), fmt.successful_payloads
-           fmt.add_successful('create_outbound_rule (%s)' % payload, ret)
+            payload = rule_templates['add_outbound_set'] % {'set': address_set, 'ip_version': ip_version}
+
+            ret = rcc.run(payload)
+            if ret["channel_code"] != CHANNEL_SUCCESS:
+                return False, fmt.channel_error(ret, f"{prefix+9}: " + messages[prefix+9] % {'payload': payload}), fmt.successful_payloads
+            if ret["payload_code"] != SUCCESS_CODE:
+                return False, fmt.payload_error(ret, f"{prefix+10}: " + messages[prefix+10] % {'payload': payload}), fmt.successful_payloads
+            fmt.add_successful('add_outbound_set (%s)' % payload, ret)
 
         if (len(outbound) > 0):
             ret = rcc.run(payloads['add_outbound_drop'])
