@@ -20,7 +20,7 @@ SUCCESS_CODE = 0
 def build(
     namespace: str,
     name: str,
-    type: Literal['ipv4_addr', 'ipv6_addr'],
+    type: str,
     config_file=None
 ) -> Tuple[bool, str]:
     """
@@ -34,6 +34,12 @@ def build(
             required: true
         name:
             description: the ruleset name, such as 'IE_V4'.
+            type: string
+            required: true
+        type:
+            description: |
+                the type of the set such as ipv4_addr, ipv6_addr, ifname etc. 
+                See https://wiki.nftables.org/wiki-nftables/index.php/Sets#Named_sets_specifications.
             type: string
             required: true
         config_file:
