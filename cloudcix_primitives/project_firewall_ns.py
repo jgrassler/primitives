@@ -126,6 +126,8 @@ def build(
     3026: f'Failed to run flush_outbound payload on the enabled PodNet. Payload exited with status ',
     3027: f'Failed to connect to the enabled PodNet for create_outbound_rule payload (%(payload)s): ',
     3028: f'Failed to run create_outbound_rule payload (%(payload)s) on the enabled PodNet. Payload exited with status ',
+    3029: f'Failed to connect to the enabled PodNet for add_final_accept payload (%(payload)s): ',
+    3030: f'Failed to run add_final_accept payload (%(payload)s) on the enabled PodNet. Payload exited with status ',
 
     3061: f'Failed to connect to the disabled PodNet for flush_inbound payload: ',
     3062: f'Failed to run flush_inbound payload on the disabled PodNet. Payload exited with status ',
@@ -135,6 +137,8 @@ def build(
     3066: f'Failed to run flush_outbound payload on the disabled PodNet. Payload exited with status ',
     3067: f'Failed to connect to the disabled PodNet for create_outbound_rule payload (%(payload)s): ',
     3068: f'Failed to run create_outbound_rule payload (%(payload)s) on the disabled PodNet. Payload exited with status ',
+    3069: f'Failed to connect to the disabled PodNet for add_final_accept payload (%(payload)s): ',
+    3070: f'Failed to run add_final_accept payload (%(payload)s) on the disabled PodNet. Payload exited with status ',
     }
 
     # Default config_file if it is None
@@ -166,6 +170,7 @@ def build(
         payloads = {
             'flush_inbound': f'ip netns exec {namespace} nft flush chain inet FILTER PROJECT_IN',
             'flush_outbound': f'ip netns exec {namespace} nft flush chain inet FILTER PROJECT_OUT',
+            'add_final_accept': f'ip netns exec {namespace} nft add rule inet FILTER PROJECT_OUT accept',
         }
 
         ret = rcc.run(payloads['flush_inbound'])
@@ -201,6 +206,13 @@ def build(
            if ret["payload_code"] != SUCCESS_CODE:
                return False, fmt.payload_error(ret, f"{prefix+8}: " + messages[prefix+4] % {'payload': payload}), fmt.successful_payloads
            fmt.add_successful('create_outbound_rule (%s)' % payload, ret)
+
+        ret = rcc.run(payloads['add_final_accept'])
+        if ret["channel_code"] != CHANNEL_SUCCESS:
+            return False, fmt.channel_error(ret, f"{prefix+9}: " + messages[prefix+9]), fmt.successful_payloads
+        if ret["payload_code"] != SUCCESS_CODE:
+            return False, fmt.payload_error(ret, f"{prefix+10}: " + messages[prefix+10]), fmt.successful_payloads
+        fmt.add_successful('add_final_accept', ret)
 
         return True, "", fmt.successful_payloads
 
